@@ -408,6 +408,20 @@
           </div>
         </div>
 
+        <!-- Detection / Mapping Summary -->
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-white text-[11px] flex items-center gap-1.5">
+              <i data-lucide="cpu" class="w-3.5 h-3.5 text-amber-400"></i>
+              Identifikovaná zařízení a role:
+            </span>
+            <span class="text-[10px] text-slate-400">Jak parser rozřadil data</span>
+          </div>
+          <div id="diagRolesList" class="space-y-1 font-mono text-[11px] text-slate-300">
+            <div class="text-slate-500 italic">Zatím neproběhla detekce zařízení.</div>
+          </div>
+        </div>
+
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-slate-300 font-semibold">
             <span>Surová odpověď (Raw JSON):</span>
@@ -421,8 +435,8 @@
         <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-300 space-y-1.5">
           <strong class="text-white block">Tipy pro řešení potíží s Cloudflare Pages:</strong>
           <ul class="list-disc list-inside space-y-1 text-slate-400">
-            <li><strong class="text-red-400">404 Not Found:</strong> Soubor <code class="text-slate-200">functions/api/fve-status.js</code> nebyl nalezen. Pokud projekt nahráváte přetažením ZIPu do Pages, Pages ignorují složku <code class="text-slate-200">functions/</code>. Použijte propojení s GitHubem nebo <code class="text-slate-200">npx wrangler pages deploy .</code>.</li>
-            <li><strong class="text-red-400">500 Server Error:</strong> Zkontrolujte proměnné v Cloudflare Dashboardu: <code class="text-slate-200">SHELLY_AUTH_KEY</code>, <code class="text-slate-200">SHELLY_SERVER_URL</code> (<strong class="text-amber-300">https://shelly-137-eu.shelly.cloud</strong>) a <code class="text-slate-200">SHELLY_DEVICE_IDS</code>.</li>
+            <li><strong class="text-amber-400">Prázdný seznam zařízení:</strong> Pokud jste proměnné <code class="text-slate-200">SHELLY_DEVICE_IDS</code> či <code class="text-slate-200">SHELLY_AUTH_KEY</code> právě uložili, nezapomeňte v Cloudflare Pages provést <strong>Retry deployment</strong> nebo nový commit – proměnné se do běžícího kontejneru promítnou až novým buildem!</li>
+            <li><strong class="text-sky-400">Automatická detekce:</strong> Aktualizovaná funkce v záložce <em>Kód pro Cloudflare</em> umí zařízení načíst automaticky, i když <code class="text-slate-200">SHELLY_DEVICE_IDS</code> nevyplníte.</li>
           </ul>
         </div>
       </div>
@@ -456,7 +470,7 @@
         <p class="text-slate-300">
           Uložte tento kód do souboru 
           <code class="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">functions/api/fve-status.js</code> 
-          ve vašem projektu. Serverless funkce zavolá Shelly Cloud s vaším tajným klíčem a data pošle do tohoto dashboardu:
+          ve vašem projektu. Tato verze automaticky načte zařízení z vašeho účtu, pokud nezadáte <code class="text-slate-300">SHELLY_DEVICE_IDS</code>:
         </p>
 
         <div class="relative">
@@ -471,22 +485,51 @@ export async function onRequestGet(context) {
   const { env } = context;
 
   const authKey = env.SHELLY_AUTH_KEY;
-  // Váš dedikovaný server Shelly Cloud:
   const serverUrl = env.SHELLY_SERVER_URL || 'https://shelly-137-eu.shelly.cloud';
   const deviceIdsRaw = env.SHELLY_DEVICE_IDS || '';
 
   if (!authKey) {
     return new Response(JSON.stringify({ 
-      error: 'SHELLY_AUTH_KEY není nastaven v Cloudflare Environment Secrets.' 
+      error: 'SHELLY_AUTH_KEY není nastaven v Cloudflare Environment Secrets.',
+      hint: 'Přejděte do Cloudflare Pages -> Settings -> Environment variables a přidejte SHELLY_AUTH_KEY.'
     }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  const deviceIds = deviceIdsRaw.split(',').map(s => s.trim()).filter(Boolean);
   const baseUrl = serverUrl.replace(/\/$/, '');
+  let deviceIds = deviceIdsRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Pokud nejsou ID vyplněna v proměnných, stáhneme automaticky seznam všech zařízení z účtu
+  if (deviceIds.length === 0) {
+    try {
+      const listUrl = `${baseUrl}/interface/device/list?auth_key=${encodeURIComponent(authKey)}`;
+      const listRes = await fetch(listUrl, { headers: { 'User-Agent': 'Cloudflare-Pages-FVE/1.0' } });
+      if (listRes.ok) {
+        const listJson = await listRes.json();
+        if (listJson.isok && listJson.data && listJson.data.devices) {
+          deviceIds = Object.keys(listJson.data.devices);
+        }
+      }
+    } catch (e) {
+      // Ignorovat, pokusíme se pokračovat
+    }
+  }
+
+  if (deviceIds.length === 0) {
+    return new Response(JSON.stringify({ 
+      error: 'Nenalezena žádná zařízení.',
+      hint: 'Zadejte SHELLY_DEVICE_IDS nebo ověřte platnost SHELLY_AUTH_KEY.',
+      server: baseUrl
+    }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   const results = {};
+  const errors = {};
 
   try {
     for (const devId of deviceIds) {
@@ -496,15 +539,21 @@ export async function onRequestGet(context) {
         const json = await res.json();
         if (json.isok && json.data) {
           results[devId] = json.data.device_status;
+        } else {
+          errors[devId] = json.errors || json;
         }
+      } else {
+        errors[devId] = `HTTP ${res.status}`;
       }
     }
 
     return new Response(JSON.stringify({ 
-      success: true, 
+      success: Object.keys(results).length > 0, 
       timestamp: Date.now(),
       server: baseUrl,
-      devices: results 
+      configuredDeviceCount: deviceIds.length,
+      devices: results,
+      errors: Object.keys(errors).length > 0 ? errors : undefined
     }), {
       headers: { 
         'Content-Type': 'application/json',
@@ -1003,40 +1052,124 @@ moje-fve-app/
     function parseShellyPayload(devices) {
       if (!devices || typeof devices !== 'object') return;
 
-      Object.values(devices).forEach(dev => {
-        // Shelly EM / 3EM / Pro EM (Meters)
-        if (dev.emeters) {
+      const detectedRoles = [];
+
+      // Zpracování jednotlivých zařízení ze Shelly cloudu
+      Object.entries(devices).forEach(([devId, dev]) => {
+        if (!dev || typeof dev !== 'object') return;
+
+        // Skenování názvů, ID i uživatelských proměnných
+        const name = (dev._name || dev.name || dev.device_name || '').toLowerCase();
+        const devIdLower = String(devId).toLowerCase();
+        const vars = (dev.sys && dev.sys.user_variables) || dev.user_variables || dev.kvs || {};
+        let matchedRole = 'Neznámé / Ostatní';
+
+        // 1. Grid Guard (3-fázový elektroměr Shelly 3EM / Pro 3EM na vstupu do domu)
+        // Rozpoznání: má emeters pole s fázemi nebo název obsahuje 'grid', 'el-celkove', 'hlavni'
+        if ((dev.emeters && dev.emeters.length >= 2) || name.includes('el-celkove') || name.includes('grid')) {
+          matchedRole = 'Distribuce / Síť (Grid Guard)';
           let sumP = 0;
-          dev.emeters.forEach((em, idx) => {
-            sumP += (em.power || 0);
-            if (idx === 0) state.currentData.gridL1 = em.current || state.currentData.gridL1;
-            if (idx === 1) state.currentData.gridL2 = em.current || state.currentData.gridL2;
-            if (idx === 2) state.currentData.gridL3 = em.current || state.currentData.gridL3;
-          });
-          state.currentData.gridPower = sumP;
+          if (dev.emeters && dev.emeters.length > 0) {
+            dev.emeters.forEach((em, idx) => {
+              sumP += (em.power || 0);
+              if (idx === 0) state.currentData.gridL1 = Number(em.current || 0);
+              if (idx === 1) state.currentData.gridL2 = Number(em.current || 0);
+              if (idx === 2) state.currentData.gridL3 = Number(em.current || 0);
+            });
+            state.currentData.gridPower = sumP;
+          } else if (vars.total_power !== undefined) {
+            state.currentData.gridPower = parseFloat(vars.total_power);
+          }
+
+          if (vars.blocked_4kw !== undefined) state.currentData.blocked4kw = String(vars.blocked_4kw) === 'true';
+          if (vars.blocked_9kw !== undefined) state.currentData.blocked9kw = String(vars.blocked_9kw) === 'true';
         }
 
-        // Single meter (Victron okruh / Plug / 1PM)
-        if (dev.meters && dev.meters[0]) {
-          state.currentData.victronLoad = dev.meters[0].power || state.currentData.victronLoad;
+        // 2. Solární regulátor EPEver Tracer (výroba z fotovoltaických panelů)
+        // Rozpoznání: klíče pv_power, pv_voltage nebo název 'xtra', 'epever', 'tracer', 'solar'
+        else if (vars.pv_power !== undefined || vars.energy_today !== undefined || name.includes('xtra') || name.includes('epever') || name.includes('tracer')) {
+          matchedRole = 'Panely & Regulátor (EPEver)';
+          if (vars.pv_power !== undefined) state.currentData.pvPower = parseFloat(vars.pv_power);
+          if (vars.pv_voltage !== undefined) state.currentData.pvVoltage = parseFloat(vars.pv_voltage);
+          if (vars.pv_current !== undefined) state.currentData.pvCurrent = parseFloat(vars.pv_current);
+          if (vars.energy_today !== undefined) state.currentData.energyToday = parseFloat(vars.energy_today);
+          if (vars.battery_temp !== undefined) state.currentData.batTemp = parseFloat(vars.battery_temp);
+          if (vars.controller_temp !== undefined) state.currentData.ctrlTemp = parseFloat(vars.controller_temp);
+          if (vars.battery_current !== undefined) state.currentData.batCurrent = parseFloat(vars.battery_current);
         }
 
-        // Relays status
-        if (dev.relays && dev.relays[0]) {
-          state.currentData.victronRelayOn = !!dev.relays[0].ison;
+        // 3. BMS Baterie (16s LiFePO4 balanc, články, napětí)
+        // Rozpoznání: klíče cells_csv, umincell, utotal nebo název 'bms', 'solar okruh power'
+        else if (vars.cells_csv !== undefined || vars.umincell !== undefined || vars.utotal !== undefined || name.includes('bms') || name.includes('solar okruh')) {
+          matchedRole = 'Baterie LiFePO4 (BMS)';
+          if (vars.battery_soc !== undefined) state.currentData.batSoc = parseInt(vars.battery_soc, 10);
+          if (vars.soc !== undefined) state.currentData.batSoc = parseInt(vars.soc, 10);
+          if (vars.utotal !== undefined) state.currentData.batVoltage = parseFloat(vars.utotal);
+          if (vars.udiff !== undefined) state.currentData.udiff = parseFloat(vars.udiff);
+          if (vars.umincell !== undefined) state.currentData.umincell = parseFloat(vars.umincell);
+          if (vars.umincell_id !== undefined) state.currentData.umincell_id = parseInt(vars.umincell_id, 10);
+          if (vars.umaxcell !== undefined) state.currentData.umaxcell = parseFloat(vars.umaxcell);
+          if (vars.umaxcell_id !== undefined) state.currentData.umaxcell_id = parseInt(vars.umaxcell_id, 10);
+          if (vars.cells_csv) {
+            const arr = vars.cells_csv.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+            if (arr.length === 16) state.currentData.cells = arr;
+          }
         }
 
-        // Custom script / user variables emitted via Shelly Scripting
-        if (dev['sys'] && dev['sys'].user_variables) {
-          const uv = dev['sys'].user_variables;
-          if (uv.pv_power !== undefined) state.currentData.pvPower = parseFloat(uv.pv_power);
-          if (uv.battery_soc !== undefined) state.currentData.batSoc = parseInt(uv.battery_soc);
-          if (uv.battery_voltage !== undefined) state.currentData.batVoltage = parseFloat(uv.battery_voltage);
-          if (uv.udiff !== undefined) state.currentData.udiff = parseFloat(uv.udiff);
+        // 4. Victron měnič / okruh (střídač a přepínání sítě)
+        // Rozpoznání: název 'victron', jednofázové relé/wattmetr
+        else if (name.includes('victron') || (dev.meters && dev.meters[0]) || (dev['switch:0'] && dev['pm:0'])) {
+          matchedRole = 'Victron Okruh (Střídač)';
+          if (dev.meters && dev.meters[0]) {
+            state.currentData.victronLoad = Number(dev.meters[0].power || 0);
+          } else if (dev['pm:0']) {
+            state.currentData.victronLoad = Number(dev['pm:0'].apower || 0);
+          }
+          if (dev.relays && dev.relays[0]) {
+            state.currentData.victronRelayOn = !!dev.relays[0].ison;
+          } else if (dev['switch:0']) {
+            state.currentData.victronRelayOn = !!dev['switch:0'].output;
+          }
+          if (vars.fve_permitted !== undefined) {
+            state.currentData.victronPermitted = String(vars.fve_permitted) === 'true';
+          }
         }
+
+        // 5. Pomocné dobíjení a Meteo stanice
+        else if (name.includes('dobijeni') || vars.ws90_lux !== undefined || vars.forecast_wh !== undefined) {
+          matchedRole = 'Pomocné dobíjení & Meteo';
+          if (vars.ws90_lux !== undefined) state.currentData.wsLux = parseInt(vars.ws90_lux, 10);
+          if (vars.forecast_wh !== undefined) state.currentData.forecastWh = parseInt(vars.forecast_wh, 10);
+          if (vars.charger_power !== undefined) state.currentData.auxPower = parseFloat(vars.charger_power);
+          if (vars.charge_mode !== undefined) state.currentData.auxMode = String(vars.charge_mode);
+        }
+
+        detectedRoles.push({ id: devId, name: dev._name || dev.name || 'Zařízení', role: matchedRole });
       });
 
+      // Render diagnostic mapping
+      renderDetectedRoles(detectedRoles);
       updateUI(state.currentData);
+    }
+
+    function renderDetectedRoles(roles) {
+      const container = document.getElementById('diagRolesList');
+      if (!container) return;
+
+      if (roles.length === 0) {
+        container.innerHTML = '<div class="text-amber-400">Žádné rozpoznané zařízení.</div>';
+        return;
+      }
+
+      container.innerHTML = roles.map(r => `
+        <div class="flex items-center justify-between p-1.5 rounded bg-slate-900 border border-slate-800/80">
+          <div>
+            <span class="text-white font-semibold">${r.role}</span>
+            <span class="text-slate-400 text-[10px] ml-1.5">(${r.name})</span>
+          </div>
+          <span class="text-amber-400 font-mono text-[10px]">${r.id}</span>
+        </div>
+      `).join('');
     }
 
     // Realistic simulation when API endpoint is not yet configured
