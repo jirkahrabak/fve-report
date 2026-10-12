@@ -6,8 +6,6 @@
   <title>FVE Smart Monitor & Dashboard (Shelly Cloud)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js for BMS cells & PV trends -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
@@ -224,7 +222,7 @@
             <!-- Node 2: Battery LiFePO4 -->
             <g transform="translate(70, 140)">
               <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#16a34a" stroke-width="2"/>
-              <text x="50" y="25" text-anchor="middle" fill="#4ade80" font-size="12" font-weight="bold">🔋 Baterie 16s</text>
+              <text x="50" y="25" text-anchor="middle" fill="#4ade80" font-size="12" font-weight="bold">🔋 Baterie LiFePO4</text>
               <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowBatText">52% (52.0V)</text>
             </g>
 
@@ -289,8 +287,8 @@
           <div class="space-y-3">
             <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
               <div>
-                <div class="text-xs font-semibold text-white">BMS Balanc článků</div>
-                <div class="text-[11px] text-slate-400" id="bmsCellStatus">Max: 3.27V (C3), Min: 3.23V (C6)</div>
+                <div class="text-xs font-semibold text-white">Rozdíl napětí článků (&Delta;U)</div>
+                <div class="text-[11px] text-slate-400" id="bmsCellStatus">&Delta;U: 0.03 V (odchylka)</div>
               </div>
               <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400">OK</span>
             </div>
@@ -331,55 +329,38 @@
 
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- BMS Cells Chart -->
-      <div class="glass-card rounded-2xl p-6 border border-slate-800 lg:col-span-2">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-semibold text-white flex items-center gap-2">
-            <i data-lucide="battery" class="w-4 h-4 text-emerald-400"></i>
-            BMS Napětí článků LiFePO4 (16s)
-          </h2>
-          <div class="flex items-center gap-3 text-xs">
-            <span class="text-slate-400">Min: <strong class="text-sky-400 font-mono" id="cellMinVal">3.23 V</strong></span>
-            <span class="text-slate-400">Max: <strong class="text-amber-400 font-mono" id="cellMaxVal">3.27 V</strong></span>
-            <span class="text-slate-400">&Delta;U: <strong class="text-slate-200 font-mono" id="cellDeltaVal">0.03 V</strong></span>
-          </div>
-        </div>
-        <div class="h-56 w-full">
-          <canvas id="bmsCellsChart"></canvas>
+    <!-- Telemetry Activity Log (Full Width) -->
+    <div class="glass-card rounded-2xl p-6 border border-slate-800">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+          <i data-lucide="activity" class="w-4 h-4 text-sky-400"></i>
+          Historie čtení telemetrie
+        </h2>
+        <div class="text-[11px] text-slate-400 flex items-center gap-3">
+          <span>Automatická obnova: <strong class="text-slate-200">15s</strong></span>
+          <span class="text-emerald-400 font-medium flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Shelly Cloud Live
+          </span>
         </div>
       </div>
-
-      <!-- Telemetry Activity Log -->
-      <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
-        <div>
-          <h2 class="text-base font-semibold text-white mb-3 flex items-center gap-2">
-            <i data-lucide="activity" class="w-4 h-4 text-sky-400"></i>
-            Historie čtení telemetrie
-          </h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="text-[11px] text-slate-400 uppercase border-b border-slate-800">
-                <tr>
-                  <th class="py-1.5 px-2">Čas</th>
-                  <th class="py-1.5 px-2">FVE</th>
-                  <th class="py-1.5 px-2">Baterie</th>
-                  <th class="py-1.5 px-2">Síť</th>
-                </tr>
-              </thead>
-              <tbody id="logsTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-          <span>Automatická obnova: <strong>10s</strong></span>
-          <span class="text-emerald-400">Shelly Cloud</span>
-        </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-[11px] text-slate-400 uppercase border-b border-slate-800">
+            <tr>
+              <th class="py-2.5 px-3">Čas</th>
+              <th class="py-2.5 px-3">FVE Výroba</th>
+              <th class="py-2.5 px-3">Měniče Victron</th>
+              <th class="py-2.5 px-3">Distribuce GRID</th>
+              <th class="py-2.5 px-3">Spotřeba domu</th>
+              <th class="py-2.5 px-3">Baterie</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+            <!-- Dynamicky doplňováno -->
+          </tbody>
+        </table>
       </div>
-
     </div>
 
   </main>
@@ -482,7 +463,6 @@
     const state = {
       refreshInterval: 15000,
       timerId: null,
-      chartInstance: null,
       lastApiResponse: null,
       lastHttpCode: null,
       lastLatencyMs: 0,
@@ -498,10 +478,6 @@
         batTemp: 25.0,
         ctrlTemp: 30.0,
         udiff: 0.03,
-        umincell: 3.23,
-        umincell_id: 6,
-        umaxcell: 3.27,
-        umaxcell_id: 3,
         // Dva FV okruhy střídačů Victron
         ve500Power: 0,
         ve500RelayOn: false,
@@ -529,8 +505,7 @@
         auxMode: 'IDLE',
         auxPower: 0,
         forecastWh: 0,
-        wsLux: 0,
-        cells: [3.25, 3.25, 3.27, 3.25, 3.25, 3.23, 3.23, 3.25, 3.26, 3.24, 3.26, 3.25, 3.26, 3.23, 3.25, 3.25]
+        wsLux: 0
       }
     };
 
@@ -622,56 +597,6 @@
       document.body.removeChild(ta);
     }
 
-    function initChart() {
-      const ctx = document.getElementById('bmsCellsChart').getContext('2d');
-      const labels = Array.from({ length: 16 }, (_, i) => `C${i + 1}`);
-
-      state.chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Napětí článku (V)',
-            data: state.currentData.cells,
-            backgroundColor: state.currentData.cells.map((v, i) => {
-              if (i + 1 === state.currentData.umaxcell_id) return 'rgba(251, 191, 36, 0.85)';
-              if (i + 1 === state.currentData.umincell_id) return 'rgba(56, 189, 248, 0.85)';
-              return 'rgba(34, 197, 94, 0.75)';
-            }),
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            borderWidth: 1,
-            borderRadius: 6,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `Napětí článku: ${context.raw} V`;
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              min: 3.10,
-              max: 3.40,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'ui-monospace, monospace' } }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { color: '#94a3b8', font: { size: 10 } }
-            }
-          }
-        }
-      });
-    }
-
     function updateUI(d) {
       // 1. PV Panely (EPEver solární regulátor)
       document.getElementById('kpiPvPower').textContent = d.pvPower.toFixed(1);
@@ -739,21 +664,10 @@
       document.getElementById('txtAuxCharger').textContent = `${d.auxMode} (${d.auxPower} W)`;
       document.getElementById('forecastVal').textContent = `${d.forecastWh} Wh/m²`;
 
-      // BMS Cells Summary
-      document.getElementById('cellMinVal').textContent = `${d.umincell.toFixed(2)} V (C${d.umincell_id})`;
-      document.getElementById('cellMaxVal').textContent = `${d.umaxcell.toFixed(2)} V (C${d.umaxcell_id})`;
-      document.getElementById('cellDeltaVal').textContent = `${d.udiff.toFixed(2)} V`;
-      document.getElementById('bmsCellStatus').textContent = `Min: ${d.umincell.toFixed(2)}V (C${d.umincell_id}) | Max: ${d.umaxcell.toFixed(2)}V (C${d.umaxcell_id})`;
-
-      // Update Chart
-      if (state.chartInstance) {
-        state.chartInstance.data.datasets[0].data = d.cells;
-        state.chartInstance.data.datasets[0].backgroundColor = d.cells.map((v, i) => {
-          if (i + 1 === d.umaxcell_id) return 'rgba(251, 191, 36, 0.9)';
-          if (i + 1 === d.umincell_id) return 'rgba(56, 189, 248, 0.9)';
-          return 'rgba(34, 197, 94, 0.75)';
-        });
-        state.chartInstance.update();
+      // Rozdíl napětí BMS (ΔU)
+      const bmsCell = document.getElementById('bmsCellStatus');
+      if (bmsCell) {
+        bmsCell.textContent = `ΔU: ${d.udiff.toFixed(3)} V (odchylka)`;
       }
 
       appendLogRecord(d, totalHouseConsumption);
@@ -764,14 +678,17 @@
 
     function appendLogRecord(d, totalHouse) {
       const tbody = document.getElementById('logsTableBody');
+      if (!tbody) return;
       const time = new Date().toLocaleTimeString('cs-CZ');
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-slate-800/40 transition';
       tr.innerHTML = `
-        <td class="py-2 px-2 text-slate-400 whitespace-nowrap">${time}</td>
-        <td class="py-2 px-2 text-amber-400 font-semibold">${d.pvPower.toFixed(0)} W</td>
-        <td class="py-2 px-2 text-indigo-300">${d.victronLoad.toFixed(0)} W (V5:${d.ve500Power.toFixed(0)}/V2:${d.ve2000Power.toFixed(0)})</td>
-        <td class="py-2 px-2 text-sky-400 font-semibold">${Math.round(d.gridPower)} W</td>
+        <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap">${time}</td>
+        <td class="py-2.5 px-3 text-amber-400 font-semibold">${d.pvPower.toFixed(0)} W</td>
+        <td class="py-2.5 px-3 text-indigo-300 font-semibold">${d.victronLoad.toFixed(0)} W <span class="text-slate-500 font-normal text-[11px]">(V5:${d.ve500Power.toFixed(0)}/V2:${d.ve2000Power.toFixed(0)})</span></td>
+        <td class="py-2.5 px-3 text-sky-400 font-semibold">${Math.round(d.gridPower)} W</td>
+        <td class="py-2.5 px-3 text-purple-300 font-semibold">${Math.round(totalHouse)} W</td>
+        <td class="py-2.5 px-3 text-emerald-400 font-semibold">${d.batSoc}% <span class="text-slate-400 font-normal text-[11px]">(${d.batVoltage.toFixed(1)}V)</span></td>
       `;
       tbody.prepend(tr);
       while (tbody.children.length > 8) {
@@ -1029,7 +946,6 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      initChart();
       updateUI(state.currentData);
 
       fetchData();
