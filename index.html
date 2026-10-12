@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="cs" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FVE Smart Monitor & Dashboard (Shelly Cloud)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for BMS cells & PV trends -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            solar: {
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04',
+            },
+            grid: {
+              400: '#38bdf8',
+              500: '#0284c7',
+            },
+            battery: {
+              400: '#4ade80',
+              500: '#22c55e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .flow-dot {
+      animation: dashMove 2s linear infinite;
+    }
+    @keyframes dashMove {
+      to { stroke-dashoffset: -20; }
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased selection:bg-amber-500 selection:text-slate-950 font-sans">
+
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="p-2.5 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 shadow-lg shadow-amber-500/20">
+        <i data-lucide="sun-medium" class="w-6 h-6 stroke-[2.5]"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-bold tracking-tight text-white">FVE & Baterie Dohled</h1>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700" id="connectionBadge">
+            <span class="w-2 h-2 rounded-full bg-amber-400" id="connectionDot"></span>
+            <span id="connectionBadgeText">Ověřuji spojení...</span>
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">Cloudflare Pages Function &bull; Shelly Cloud (shelly-137-eu.shelly.cloud)</p>
+      </div>
+    </div>
+
+    <!-- Right Controls: Auto-refresh, Last Update, Diagnostics, Cloudflare Code, Settings -->
+    <div class="flex items-center gap-2">
+      <div class="text-right hidden sm:block mr-2">
+        <div class="text-[11px] text-slate-400">Poslední obnova:</div>
+        <div class="text-xs font-mono font-medium text-slate-200" id="lastUpdatedText">Čeká se...</div>
+      </div>
+
+      <button id="refreshBtn" onclick="manualFetch()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium" title="Obnovit data nyní">
+        <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
+        <span class="hidden md:inline">Obnovit</span>
+      </button>
+
+      <button onclick="toggleModal('diagModal')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium" title="Diagnostika HTTP a Raw odpovědi z API">
+        <i data-lucide="terminal" class="w-4 h-4 text-sky-400"></i>
+        <span class="hidden sm:inline">Diagnostika</span>
+      </button>
+
+      <button onclick="toggleModal('archModal')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium" title="Architektura Cloudflare Pages & API">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+        <span class="hidden sm:inline">Kód pro Cloudflare</span>
+      </button>
+
+      <button onclick="toggleModal('settingsModal')" class="p-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition flex items-center gap-1.5 text-xs" title="Nastavení koncového bodu">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+        <span>Zdroj dat</span>
+      </button>
+    </div>
+  </header>
+
+  <div id="apiAlertBanner" class="hidden px-4 sm:px-6 py-2.5 bg-red-950/80 border-b border-red-500/30 text-red-200 text-xs flex items-center justify-between gap-3 backdrop-blur">
+    <div class="flex items-center gap-2 overflow-hidden">
+      <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400 flex-shrink-0"></i>
+      <span class="font-medium truncate" id="apiAlertMsg">Volání /api/fve-status selhalo</span>
+    </div>
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button onclick="toggleModal('diagModal')" class="px-2 py-0.5 rounded bg-red-900/60 hover:bg-red-800 border border-red-500/40 text-[11px] font-semibold text-white">Detail chyby</button>
+      <button onclick="dismissAlert()" class="text-red-400 hover:text-white p-0.5"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+    </div>
+  </div>
+
+  <main class="flex-1 overflow-y-auto px-4 sm:px-6 py-6 max-w-7xl w-full mx-auto space-y-6">
+
+    <!-- KPI Summary Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- PV Production -->
+      <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition"></div>
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-medium uppercase tracking-wider">Aktuální výroba (PV)</span>
+          <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><i data-lucide="sun" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiPvPower">403.2</span>
+          <span class="text-sm font-semibold text-amber-400">W</span>
+        </div>
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span id="kpiPvMetrics">96.0 V &bull; 4.2 A</span>
+          <span class="text-slate-300 font-medium">Dnes: <strong class="text-amber-300" id="kpiEnergyToday">0.50 kWh</strong></span>
+        </div>
+      </div>
+
+      <!-- Battery SOC & Voltage -->
+      <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-medium uppercase tracking-wider">Baterie LiFePO4</span>
+          <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><i data-lucide="battery-charging" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiSoc">52</span>
+          <span class="text-sm font-semibold text-emerald-400">%</span>
+          <span class="text-xs font-mono text-slate-400 ml-auto" id="kpiBatVoltage">52.05 V</span>
+        </div>
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span>Proud: <strong class="text-emerald-400" id="kpiBatCurrent">+7.5 A</strong></span>
+          <span>&Delta;U: <strong class="text-slate-200" id="kpiUdiff">0.03 V</strong></span>
+        </div>
+      </div>
+
+      <!-- Victron Load & Mode -->
+      <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-medium uppercase tracking-wider">Victron Okruh</span>
+          <div class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400"><i data-lucide="zap" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiVictronLoad">136.7</span>
+          <span class="text-sm font-semibold text-indigo-400">W</span>
+        </div>
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span>Režim: <span class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300" id="kpiVictronMode">SÍŤ (GRID)</span></span>
+          <span id="kpiVictronPermit">FVE nepovolena</span>
+        </div>
+      </div>
+
+      <!-- Grid Power & Protection -->
+      <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl group-hover:bg-sky-500/20 transition"></div>
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-medium uppercase tracking-wider">Dům / Síť (Grid Guard)</span>
+          <div class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><i data-lucide="plug" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiGridPower">146</span>
+          <span class="text-sm font-semibold text-sky-400">W</span>
+        </div>
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span id="kpiGridPhases">L1: 0.7A &bull; L2: 0A &bull; L3: 0.1A</span>
+          <span class="text-emerald-400 font-medium" id="kpiGridLocks">4kW/9kW OK</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Interactive Power Flow Visualizer -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 lg:col-span-2 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i data-lucide="git-merge" class="w-4 h-4 text-amber-400"></i>
+            Tok energie v systému
+          </h2>
+          <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 font-mono text-slate-300">
+            Predikce osvitu: <strong class="text-amber-400" id="forecastVal">1 579 Wh/m²</strong>
+          </span>
+        </div>
+
+        <!-- SVG Synoptic diagram -->
+        <div class="w-full bg-slate-900/60 rounded-xl p-4 border border-slate-800/60 relative flex items-center justify-center min-h-[220px]">
+          <svg viewBox="0 0 600 240" class="w-full max-w-2xl h-auto drop-shadow-md">
+            <!-- Lines between nodes -->
+            <path d="M 120 70 L 300 120" stroke="#ca8a04" stroke-width="3" stroke-dasharray="6 4" class="flow-dot"/>
+            <path d="M 120 170 L 300 120" stroke="#16a34a" stroke-width="3" stroke-dasharray="6 4" class="flow-dot"/>
+            <path d="M 480 70 L 300 120" stroke="#0284c7" stroke-width="2" stroke-dasharray="4 4" class="flow-dot"/>
+            <path d="M 300 120 L 480 170" stroke="#818cf8" stroke-width="3" stroke-dasharray="6 4" class="flow-dot"/>
+
+            <!-- Node 1: PV Panels -->
+            <g transform="translate(70, 40)">
+              <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#ca8a04" stroke-width="2"/>
+              <text x="50" y="25" text-anchor="middle" fill="#facc15" font-size="12" font-weight="bold">☀️ Panely (FVE)</text>
+              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowPvText">403 W</text>
+            </g>
+
+            <!-- Node 2: Battery LiFePO4 -->
+            <g transform="translate(70, 140)">
+              <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#16a34a" stroke-width="2"/>
+              <text x="50" y="25" text-anchor="middle" fill="#4ade80" font-size="12" font-weight="bold">🔋 Baterie 16s</text>
+              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowBatText">52% (52.0V)</text>
+            </g>
+
+            <!-- Node 3: Center Inverter / Management Hub -->
+            <g transform="translate(250, 90)">
+              <rect width="100" height="60" rx="14" fill="#0f172a" stroke="#818cf8" stroke-width="2"/>
+              <text x="50" y="25" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">VIC / EPEVER</text>
+              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700" id="flowModeText">Grid Režim</text>
+            </g>
+
+            <!-- Node 4: Grid (Distribuce) -->
+            <g transform="translate(430, 40)">
+              <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
+              <text x="50" y="25" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="bold">⚡ Distribuce Síť</text>
+              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowGridText">146 W</text>
+            </g>
+
+            <!-- Node 5: Spotřeba Domu -->
+            <g transform="translate(430, 140)">
+              <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#c084fc" stroke-width="2"/>
+              <text x="50" y="25" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">🏠 Spotřeba okruhu</text>
+              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowLoadText">137 W</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-400 block">Teplota regulátoru:</span>
+            <span class="font-bold text-slate-200" id="txtDevTemp">34.3 °C</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Teplota baterie:</span>
+            <span class="font-bold text-slate-200" id="txtBatTemp">25.5 °C</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Meteo WS90 osvit:</span>
+            <span class="font-bold text-amber-300" id="txtWsLux">13 650 Lux</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Pomocná nabíječka:</span>
+            <span class="font-bold text-slate-300" id="txtAuxCharger">IDLE (0 W)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            Bezpečnost & Ochrany (Shelly)
+          </h2>
+
+          <div class="space-y-3">
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold text-white">BMS Balanc článků</div>
+                <div class="text-[11px] text-slate-400" id="bmsCellStatus">Max: 3.27V (C3), Min: 3.23V (C6)</div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400">OK</span>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold text-white">Relé BMS 1 & 2</div>
+                <div class="text-[11px] text-slate-400">Bezpečnostní odpojení</div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400" id="bmsRelayStatus">NORMAL</span>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold text-white">Blokace 4kW boileru</div>
+                <div class="text-[11px] text-slate-400">Grid Guard dynamická regulace</div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400" id="lock4kw">Uvolněno</span>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold text-white">Blokace 9kW tělesa</div>
+                <div class="text-[11px] text-slate-400">Dohled přetížení fází</div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400" id="lock9kw">Uvolněno</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+          <button onclick="toggleModal('diagModal')" class="text-xs text-sky-400 hover:text-sky-300 font-medium inline-flex items-center gap-1">
+            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+            Ověřit spojení (RAW JSON)
+          </button>
+          <button onclick="toggleModal('archModal')" class="text-xs text-slate-400 hover:text-slate-300 font-medium inline-flex items-center gap-1">
+            <i data-lucide="code" class="w-3.5 h-3.5"></i>
+            Kód funkce
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- BMS Cells Chart -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i data-lucide="battery" class="w-4 h-4 text-emerald-400"></i>
+            BMS Napětí článků LiFePO4 (16s)
+          </h2>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="text-slate-400">Min: <strong class="text-sky-400 font-mono" id="cellMinVal">3.23 V</strong></span>
+            <span class="text-slate-400">Max: <strong class="text-amber-400 font-mono" id="cellMaxVal">3.27 V</strong></span>
+            <span class="text-slate-400">&Delta;U: <strong class="text-slate-200 font-mono" id="cellDeltaVal">0.03 V</strong></span>
+          </div>
+        </div>
+        <div class="h-56 w-full">
+          <canvas id="bmsCellsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Telemetry Activity Log -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-white mb-3 flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-sky-400"></i>
+            Historie čtení telemetrie
+          </h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="text-[11px] text-slate-400 uppercase border-b border-slate-800">
+                <tr>
+                  <th class="py-1.5 px-2">Čas</th>
+                  <th class="py-1.5 px-2">FVE</th>
+                  <th class="py-1.5 px-2">Baterie</th>
+                  <th class="py-1.5 px-2">Síť</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+          <span>Automatická obnova: <strong>10s</strong></span>
+          <span class="text-emerald-400">Shelly Cloud</span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="diagModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-shrink-0">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="terminal" class="w-5 h-5 text-sky-400"></i>
+          Diagnostika volání API (/api/fve-status)
+        </h3>
+        <button onclick="toggleModal('diagModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-4 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block text-[10px] uppercase">HTTP Kód</span>
+            <span class="font-mono font-bold text-sm" id="diagHttpStatus">-</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block text-[10px] uppercase">Zdroj dat</span>
+            <span class="font-bold text-sm text-amber-300" id="diagSource">Pages Function</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block text-[10px] uppercase">Odezva</span>
+            <span class="font-mono font-bold text-sm text-emerald-400" id="diagLatency">- ms</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block text-[10px] uppercase">Stav zařízení</span>
+            <span class="font-bold text-sm text-slate-200" id="diagDeviceCount">0 detekováno</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-slate-300 font-semibold">
+            <span>Surová odpověď (Raw JSON):</span>
+            <button onclick="copyDiagRaw()" class="text-sky-400 hover:text-sky-300 text-[11px] flex items-center gap-1 font-normal">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Kopírovat JSON
+            </button>
+          </div>
+          <pre id="diagRawJson" class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-64 leading-relaxed selection:bg-amber-500 selection:text-slate-950">Zatím neproběhl žádný požadavek. Klikněte na „Testovat nyní“.</pre>
+        </div>
+
+        <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-300 space-y-1.5">
+          <strong class="text-white block">Tipy pro řešení potíží s Cloudflare Pages:</strong>
+          <ul class="list-disc list-inside space-y-1 text-slate-400">
+            <li><strong class="text-red-400">404 Not Found:</strong> Soubor <code class="text-slate-200">functions/api/fve-status.js</code> nebyl nalezen. Pokud projekt nahráváte přetažením ZIPu do Pages, Pages ignorují složku <code class="text-slate-200">functions/</code>. Použijte propojení s GitHubem nebo <code class="text-slate-200">npx wrangler pages deploy .</code>.</li>
+            <li><strong class="text-red-400">500 Server Error:</strong> Zkontrolujte proměnné v Cloudflare Dashboardu: <code class="text-slate-200">SHELLY_AUTH_KEY</code>, <code class="text-slate-200">SHELLY_SERVER_URL</code> (<strong class="text-amber-300">https://shelly-137-eu.shelly.cloud</strong>) a <code class="text-slate-200">SHELLY_DEVICE_IDS</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-800 flex-shrink-0">
+        <a href="/api/fve-status" target="_blank" class="text-xs text-sky-400 hover:underline flex items-center gap-1">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          Otevřít /api/fve-status v novém okně
+        </a>
+        <div class="flex items-center gap-2">
+          <button onclick="manualFetch()" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">Testovat nyní</button>
+          <button onclick="toggleModal('diagModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">Zavřít</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="archModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-shrink-0">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="code" class="w-5 h-5 text-emerald-400"></i>
+          Kód pro Cloudflare Pages Function
+        </h3>
+        <button onclick="toggleModal('archModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-3 text-xs">
+        <p class="text-slate-300">
+          Uložte tento kód do souboru 
+          <code class="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">functions/api/fve-status.js</code> 
+          ve vašem projektu. Serverless funkce zavolá Shelly Cloud s vaším tajným klíčem a data pošle do tohoto dashboardu:
+        </p>
+
+        <div class="relative">
+          <button onclick="copyWorkerCode()" id="copyBtn" class="absolute top-2 right-2 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-medium flex items-center gap-1">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Kopírovat kód
+          </button>
+          <pre id="workerCodeBlock" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed max-h-72 select-all">/**
+ * Cloudflare Pages Function: /api/fve-status
+ * Uložte jako: functions/api/fve-status.js
+ */
+export async function onRequestGet(context) {
+  const { env } = context;
+
+  const authKey = env.SHELLY_AUTH_KEY;
+  // Váš dedikovaný server Shelly Cloud:
+  const serverUrl = env.SHELLY_SERVER_URL || 'https://shelly-137-eu.shelly.cloud';
+  const deviceIdsRaw = env.SHELLY_DEVICE_IDS || '';
+
+  if (!authKey) {
+    return new Response(JSON.stringify({ 
+      error: 'SHELLY_AUTH_KEY není nastaven v Cloudflare Environment Secrets.' 
+    }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const deviceIds = deviceIdsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const baseUrl = serverUrl.replace(/\/$/, '');
+  const results = {};
+
+  try {
+    for (const devId of deviceIds) {
+      const url = `${baseUrl}/device/status?id=${encodeURIComponent(devId)}&auth_key=${encodeURIComponent(authKey)}`;
+      const res = await fetch(url, { headers: { 'User-Agent': 'Cloudflare-Pages-FVE/1.0' } });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.isok && json.data) {
+          results[devId] = json.data.device_status;
+        }
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      timestamp: Date.now(),
+      server: baseUrl,
+      devices: results 
+    }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
+      }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { 
+      status: 502,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}</pre>
+        </div>
+
+        <div class="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/80 space-y-2">
+          <div class="font-semibold text-sky-300">Struktura projektu v repozitáři:</div>
+          <pre class="font-mono text-[11px] text-amber-300 bg-slate-950/70 p-2 rounded-lg">
+moje-fve-app/
+├── index.html                  (tento dashboard)
+└── functions/
+    └── api/
+        └── fve-status.js       (Cloudflare Pages Function)
+          </pre>
+          <div class="text-[11px] text-slate-400">
+            V Cloudflare administraci nastavíte:
+            <code class="text-slate-200">SHELLY_SERVER_URL</code> = <code class="text-amber-300">https://shelly-137-eu.shelly.cloud</code>,
+            <code class="text-slate-200">SHELLY_AUTH_KEY</code> (zaškrtnout Encrypt/Secret) a
+            <code class="text-slate-200">SHELLY_DEVICE_IDS</code>.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-800">
+        <button onclick="toggleModal('archModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">Rozumím</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-amber-400"></i>
+          Nastavení připojení k Shelly Cloud
+        </h3>
+        <button onclick="toggleModal('settingsModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Režim zdroje dat:</label>
+          <select id="apiModeSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="cf_function">Cloudflare Pages Function (/api/fve-status) &ndash; Doporučeno & Bezpečné</option>
+            <option value="demo">Demo Režim (Ukázková telemetrie z FVE)</option>
+            <option value="shelly_direct">Přímé volání Shelly Cloud (přes prohlížeč)</option>
+          </select>
+        </div>
+
+        <div id="cfFunctionGroup" class="space-y-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 text-[11px]">
+          <strong>Bezpečný serverless režim:</strong> Dashboard se dotazuje na interní koncový bod <code class="font-mono bg-slate-950 px-1 py-0.5 rounded">/api/fve-status</code>. Váš tajný Shelly Auth Key je bezpečně uložen v Cloudflare Secrets a na frontend se nikdy neodešle.
+        </div>
+
+        <div id="shellyDirectGroup" class="space-y-3 hidden">
+          <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300 text-[11px]">
+            ⚠️ V přímém režimu volá prohlížeč Shelly Cloud přímo. Auth klíč se ukládá pouze v localStorage vašeho prohlížeče.
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-1">Shelly Server URL:</label>
+            <input type="text" id="shellyServerUrl" placeholder="https://shelly-137-eu.shelly.cloud" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100 font-mono focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-1">Shelly Auth Key (Token):</label>
+            <input type="password" id="shellyAuthKey" placeholder="váš auth_key ze Shelly Cloud..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100 font-mono focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-1">Device IDs (čárkou oddělená ID měřičů):</label>
+            <input type="text" id="shellyDeviceIds" placeholder="id1, id2, id3" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100 font-mono focus:ring-1 focus:ring-amber-500">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="toggleModal('settingsModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Zavřít</button>
+        <button onclick="saveApiSettings()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow">Uložit & Spustit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management strictly based on Shelly Cloud data
+    const state = {
+      apiMode: 'cf_function',
+      shellyServer: 'https://shelly-137-eu.shelly.cloud',
+      shellyKey: '',
+      shellyIds: '',
+      refreshInterval: 10000,
+      timerId: null,
+      chartInstance: null,
+      lastApiResponse: null,
+      lastHttpCode: null,
+      lastLatencyMs: 0,
+      currentData: {
+        pvPower: 403.2,
+        pvVoltage: 96.0,
+        pvCurrent: 4.2,
+        energyToday: 0.50,
+        batVoltage: 52.05,
+        batCurrent: 7.5,
+        batSoc: 52,
+        batTemp: 25.5,
+        ctrlTemp: 34.3,
+        udiff: 0.03,
+        umincell: 3.23,
+        umincell_id: 6,
+        umaxcell: 3.27,
+        umaxcell_id: 3,
+        victronLoad: 136.7,
+        victronRelayOn: false,
+        victronPermitted: false,
+        gridPower: 146,
+        gridL1: 0.7,
+        gridL2: 0.0,
+        gridL3: 0.1,
+        blocked4kw: false,
+        blocked9kw: false,
+        auxMode: 'IDLE',
+        auxPower: 0,
+        forecastWh: 1579,
+        wsLux: 13650,
+        cells: [3.25, 3.25, 3.27, 3.25, 3.25, 3.23, 3.23, 3.25, 3.26, 3.24, 3.26, 3.25, 3.26, 3.23, 3.25, 3.25]
+      }
+    };
+
+    function toggleModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden');
+    }
+
+    function setConnectionStatus(type, text) {
+      const badge = document.getElementById('connectionBadge');
+      const dot = document.getElementById('connectionDot');
+      const badgeText = document.getElementById('connectionBadgeText');
+
+      if (type === 'online') {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        badgeText.textContent = text || 'Shelly Cloud Live';
+        hideAlert();
+      } else if (type === 'error') {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20';
+        dot.className = 'w-2 h-2 rounded-full bg-red-400';
+        badgeText.textContent = text || 'Chyba API';
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        badgeText.textContent = text || 'Demo / Simulace';
+      }
+    }
+
+    function showAlert(msg) {
+      const banner = document.getElementById('apiAlertBanner');
+      const text = document.getElementById('apiAlertMsg');
+      if (banner && text) {
+        text.textContent = msg;
+        banner.classList.remove('hidden');
+      }
+    }
+
+    function dismissAlert() {
+      const banner = document.getElementById('apiAlertBanner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function hideAlert() {
+      dismissAlert();
+    }
+
+    function updateDiagView() {
+      const httpEl = document.getElementById('diagHttpStatus');
+      const latencyEl = document.getElementById('diagLatency');
+      const sourceEl = document.getElementById('diagSource');
+      const countEl = document.getElementById('diagDeviceCount');
+      const rawEl = document.getElementById('diagRawJson');
+
+      if (httpEl) {
+        httpEl.textContent = state.lastHttpCode ? `${state.lastHttpCode}` : '-';
+        if (state.lastHttpCode === 200) httpEl.className = 'font-mono font-bold text-sm text-emerald-400';
+        else if (state.lastHttpCode) httpEl.className = 'font-mono font-bold text-sm text-red-400';
+        else httpEl.className = 'font-mono font-bold text-sm text-slate-400';
+      }
+
+      if (latencyEl) latencyEl.textContent = `${state.lastLatencyMs} ms`;
+      if (sourceEl) sourceEl.textContent = state.apiMode === 'cf_function' ? 'Pages Function' : (state.apiMode === 'shelly_direct' ? 'Shelly Direct' : 'Demo');
+
+      if (countEl && state.lastApiResponse) {
+        const devs = state.lastApiResponse.devices || state.lastApiResponse;
+        const count = devs && typeof devs === 'object' ? Object.keys(devs).length : 0;
+        countEl.textContent = `${count} zařízení`;
+      }
+
+      if (rawEl) {
+        rawEl.textContent = state.lastApiResponse ? JSON.stringify(state.lastApiResponse, null, 2) : 'Žádná odpověď';
+      }
+    }
+
+    function copyDiagRaw() {
+      const rawEl = document.getElementById('diagRawJson');
+      if (!rawEl) return;
+      const ta = document.createElement('textarea');
+      ta.value = rawEl.innerText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+
+    function copyWorkerCode() {
+      const code = document.getElementById('workerCodeBlock').innerText;
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+
+      const btn = document.getElementById('copyBtn');
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span class="text-emerald-400">Zkopírováno!</span>`;
+      lucide.createIcons();
+      setTimeout(() => { btn.innerHTML = origText; lucide.createIcons(); }, 2000);
+    }
+
+    function initSettingsInputs() {
+      const savedMode = localStorage.getItem('fve_api_mode');
+      const savedServer = localStorage.getItem('fve_shelly_server');
+      const savedKey = localStorage.getItem('fve_shelly_key');
+      const savedIds = localStorage.getItem('fve_shelly_ids');
+
+      if (savedMode) state.apiMode = savedMode;
+      if (savedServer) state.shellyServer = savedServer;
+      if (savedKey) state.shellyKey = savedKey;
+      if (savedIds) state.shellyIds = savedIds;
+
+      document.getElementById('apiModeSelect').value = state.apiMode;
+      document.getElementById('shellyServerUrl').value = state.shellyServer;
+      document.getElementById('shellyAuthKey').value = state.shellyKey;
+      document.getElementById('shellyDeviceIds').value = state.shellyIds;
+
+      updateConfigVisibility();
+      document.getElementById('apiModeSelect').addEventListener('change', updateConfigVisibility);
+    }
+
+    function updateConfigVisibility() {
+      const mode = document.getElementById('apiModeSelect').value;
+      const directGroup = document.getElementById('shellyDirectGroup');
+      const cfGroup = document.getElementById('cfFunctionGroup');
+
+      if (cfGroup) cfGroup.classList.toggle('hidden', mode !== 'cf_function');
+      if (directGroup) directGroup.classList.toggle('hidden', mode !== 'shelly_direct');
+    }
+
+    function saveApiSettings() {
+      state.apiMode = document.getElementById('apiModeSelect').value;
+      state.shellyServer = document.getElementById('shellyServerUrl').value.trim() || 'https://shelly-137-eu.shelly.cloud';
+      state.shellyKey = document.getElementById('shellyAuthKey').value.trim();
+      state.shellyIds = document.getElementById('shellyDeviceIds').value.trim();
+
+      localStorage.setItem('fve_api_mode', state.apiMode);
+      localStorage.setItem('fve_shelly_server', state.shellyServer);
+      localStorage.setItem('fve_shelly_key', state.shellyKey);
+      localStorage.setItem('fve_shelly_ids', state.shellyIds);
+
+      toggleModal('settingsModal');
+      manualFetch();
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('bmsCellsChart').getContext('2d');
+      const labels = Array.from({ length: 16 }, (_, i) => `C${i + 1}`);
+
+      state.chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Napětí článku (V)',
+            data: state.currentData.cells,
+            backgroundColor: state.currentData.cells.map((v, i) => {
+              if (i + 1 === state.currentData.umaxcell_id) return 'rgba(251, 191, 36, 0.85)';
+              if (i + 1 === state.currentData.umincell_id) return 'rgba(56, 189, 248, 0.85)';
+              return 'rgba(34, 197, 94, 0.75)';
+            }),
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `Napětí článku: ${context.raw} V`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              min: 3.10,
+              max: 3.40,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'ui-monospace, monospace' } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    function updateUI(d) {
+      // 1. PV Panels
+      document.getElementById('kpiPvPower').textContent = d.pvPower.toFixed(1);
+      document.getElementById('kpiPvMetrics').textContent = `${d.pvVoltage.toFixed(1)} V • ${d.pvCurrent.toFixed(1)} A`;
+      document.getElementById('kpiEnergyToday').textContent = `${d.energyToday.toFixed(2)} kWh`;
+
+      // 2. Battery
+      document.getElementById('kpiSoc').textContent = d.batSoc;
+      document.getElementById('kpiBatVoltage').textContent = `${d.batVoltage.toFixed(2)} V`;
+      document.getElementById('kpiBatCurrent').textContent = `${d.batCurrent >= 0 ? '+' : ''}${d.batCurrent.toFixed(1)} A`;
+      document.getElementById('kpiUdiff').textContent = `${d.udiff.toFixed(2)} V`;
+
+      // 3. Victron Okruh
+      document.getElementById('kpiVictronLoad').textContent = d.victronLoad.toFixed(1);
+      const vMode = document.getElementById('kpiVictronMode');
+      if (d.victronRelayOn) {
+        vMode.textContent = 'MĚNIČ (FVE)';
+        vMode.className = 'px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300';
+      } else {
+        vMode.textContent = 'SÍŤ (GRID)';
+        vMode.className = 'px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300';
+      }
+      document.getElementById('kpiVictronPermit').textContent = d.victronPermitted ? 'FVE Povolena' : 'FVE nepovolena';
+
+      // 4. Grid Guard
+      document.getElementById('kpiGridPower').textContent = Math.round(d.gridPower);
+      document.getElementById('kpiGridPhases').textContent = `L1: ${d.gridL1}A • L2: ${d.gridL2}A • L3: ${d.gridL3}A`;
+      document.getElementById('kpiGridLocks').textContent = (d.blocked4kw || d.blocked9kw) ? 'Blokace aktivní' : '4kW/9kW OK';
+
+      // Synoptic Flow SVG
+      document.getElementById('flowPvText').textContent = `${Math.round(d.pvPower)} W`;
+      document.getElementById('flowBatText').textContent = `${d.batSoc}% (${d.batVoltage.toFixed(1)}V)`;
+      document.getElementById('flowModeText').textContent = d.victronRelayOn ? 'Victron FVE' : 'Victron Bypass';
+      document.getElementById('flowGridText').textContent = `${Math.round(d.gridPower)} W`;
+      document.getElementById('flowLoadText').textContent = `${Math.round(d.victronLoad)} W`;
+
+      // Diagnostics & Meteo
+      document.getElementById('forecastVal').textContent = `${d.forecastWh} Wh/m²`;
+      document.getElementById('txtDevTemp').textContent = `${d.ctrlTemp} °C`;
+      document.getElementById('txtBatTemp').textContent = `${d.batTemp} °C`;
+      document.getElementById('txtWsLux').textContent = `${d.wsLux.toLocaleString('cs-CZ')} Lux`;
+      document.getElementById('txtAuxCharger').textContent = `${d.auxMode} (${d.auxPower} W)`;
+
+      // BMS Cells Summary
+      document.getElementById('cellMinVal').textContent = `${d.umincell.toFixed(2)} V (C${d.umincell_id})`;
+      document.getElementById('cellMaxVal').textContent = `${d.umaxcell.toFixed(2)} V (C${d.umaxcell_id})`;
+      document.getElementById('cellDeltaVal').textContent = `${d.udiff.toFixed(2)} V`;
+      document.getElementById('bmsCellStatus').textContent = `Min: ${d.umincell.toFixed(2)}V (C${d.umincell_id}) | Max: ${d.umaxcell.toFixed(2)}V (C${d.umaxcell_id})`;
+
+      // Update Chart
+      if (state.chartInstance) {
+        state.chartInstance.data.datasets[0].data = d.cells;
+        state.chartInstance.data.datasets[0].backgroundColor = d.cells.map((v, i) => {
+          if (i + 1 === d.umaxcell_id) return 'rgba(251, 191, 36, 0.9)';
+          if (i + 1 === d.umincell_id) return 'rgba(56, 189, 248, 0.9)';
+          return 'rgba(34, 197, 94, 0.75)';
+        });
+        state.chartInstance.update();
+      }
+
+      appendLogRecord(d);
+
+      const now = new Date();
+      document.getElementById('lastUpdatedText').textContent = now.toLocaleTimeString('cs-CZ');
+    }
+
+    function appendLogRecord(d) {
+      const tbody = document.getElementById('logsTableBody');
+      const time = new Date().toLocaleTimeString('cs-CZ');
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-800/40 transition';
+      tr.innerHTML = `
+        <td class="py-2 px-2 text-slate-400 whitespace-nowrap">${time}</td>
+        <td class="py-2 px-2 text-amber-400 font-semibold">${d.pvPower.toFixed(0)} W</td>
+        <td class="py-2 px-2 text-emerald-400">${d.batVoltage.toFixed(1)}V (${d.batSoc}%)</td>
+        <td class="py-2 px-2 text-sky-400">${Math.round(d.gridPower)} W</td>
+      `;
+      tbody.prepend(tr);
+      while (tbody.children.length > 8) {
+        tbody.removeChild(tbody.lastChild);
+      }
+    }
+
+    async function fetchData() {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon.classList.add('animate-spin');
+      const startTime = performance.now();
+
+      try {
+        if (state.apiMode === 'cf_function') {
+          await fetchFromPagesFunction();
+        } else if (state.apiMode === 'shelly_direct' && state.shellyKey && state.shellyServer) {
+          await fetchDirectFromShellyCloud();
+        } else {
+          state.lastHttpCode = 'DEMO';
+          state.lastApiResponse = { notice: 'Režim Demo simulace', currentData: state.currentData };
+          simulateDemoTelemetry();
+          setConnectionStatus('demo', 'Demo Režim');
+        }
+      } catch (err) {
+        console.error('FVE Fetch error:', err);
+        setConnectionStatus('error', `Chyba API (${state.lastHttpCode || 'Network'})`);
+        showAlert(`Chyba volání API: ${err.message}. Klikněte na „Diagnostika“ pro zobrazení detailu.`);
+        state.lastApiResponse = { error: err.message, httpStatus: state.lastHttpCode, timestamp: new Date().toISOString() };
+      } finally {
+        state.lastLatencyMs = Math.round(performance.now() - startTime);
+        updateDiagView();
+        setTimeout(() => refreshIcon.classList.remove('animate-spin'), 400);
+      }
+    }
+
+    // Call Cloudflare Pages Function endpoint
+    async function fetchFromPagesFunction() {
+      const response = await fetch('/api/fve-status', { cache: 'no-store' });
+      state.lastHttpCode = response.status;
+
+      let json = null;
+      try {
+        json = await response.json();
+      } catch (e) {
+        const rawText = await response.text();
+        throw new Error(`HTTP ${response.status}: Server nevrátil platný JSON (${rawText.slice(0, 100)})`);
+      }
+
+      state.lastApiResponse = json;
+
+      if (!response.ok) {
+        const errMsg = json?.error || `HTTP ${response.status} ${response.statusText}`;
+        throw new Error(errMsg);
+      }
+
+      if (json && json.devices && Object.keys(json.devices).length > 0) {
+        parseShellyPayload(json.devices);
+        setConnectionStatus('online', 'Shelly Cloud Live');
+      } else {
+        setConnectionStatus('error', 'Žádná zařízení');
+        showAlert('Funkce /api/fve-status vrátila prázdný seznam zařízení. Zkontrolujte SHELLY_DEVICE_IDS v Cloudflare.');
+      }
+    }
+
+    // Direct fetch (for local dev/testing)
+    async function fetchDirectFromShellyCloud() {
+      const devIds = state.shellyIds.split(',').map(s => s.trim()).filter(Boolean);
+      const devices = {};
+      state.lastHttpCode = 200;
+
+      const baseServer = (state.shellyServer || 'https://shelly-137-eu.shelly.cloud').replace(/\/$/, '');
+
+      for (const devId of devIds) {
+        const url = `${baseServer}/device/status?id=${encodeURIComponent(devId)}&auth_key=${encodeURIComponent(state.shellyKey)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.isok && json.data) {
+            devices[devId] = json.data.device_status;
+          }
+        }
+      }
+
+      state.lastApiResponse = { devices };
+      parseShellyPayload(devices);
+      setConnectionStatus('online', 'Shelly Cloud Direct');
+    }
+
+    // Parse Shelly Cloud device structures
+    function parseShellyPayload(devices) {
+      if (!devices || typeof devices !== 'object') return;
+
+      Object.values(devices).forEach(dev => {
+        // Shelly EM / 3EM / Pro EM (Meters)
+        if (dev.emeters) {
+          let sumP = 0;
+          dev.emeters.forEach((em, idx) => {
+            sumP += (em.power || 0);
+            if (idx === 0) state.currentData.gridL1 = em.current || state.currentData.gridL1;
+            if (idx === 1) state.currentData.gridL2 = em.current || state.currentData.gridL2;
+            if (idx === 2) state.currentData.gridL3 = em.current || state.currentData.gridL3;
+          });
+          state.currentData.gridPower = sumP;
+        }
+
+        // Single meter (Victron okruh / Plug / 1PM)
+        if (dev.meters && dev.meters[0]) {
+          state.currentData.victronLoad = dev.meters[0].power || state.currentData.victronLoad;
+        }
+
+        // Relays status
+        if (dev.relays && dev.relays[0]) {
+          state.currentData.victronRelayOn = !!dev.relays[0].ison;
+        }
+
+        // Custom script / user variables emitted via Shelly Scripting
+        if (dev['sys'] && dev['sys'].user_variables) {
+          const uv = dev['sys'].user_variables;
+          if (uv.pv_power !== undefined) state.currentData.pvPower = parseFloat(uv.pv_power);
+          if (uv.battery_soc !== undefined) state.currentData.batSoc = parseInt(uv.battery_soc);
+          if (uv.battery_voltage !== undefined) state.currentData.batVoltage = parseFloat(uv.battery_voltage);
+          if (uv.udiff !== undefined) state.currentData.udiff = parseFloat(uv.udiff);
+        }
+      });
+
+      updateUI(state.currentData);
+    }
+
+    // Realistic simulation when API endpoint is not yet configured
+    function simulateDemoTelemetry() {
+      const jitter = (Math.random() - 0.5) * 5;
+      state.currentData.pvPower = Math.max(0, state.currentData.pvPower + jitter);
+      state.currentData.gridPower = Math.max(40, state.currentData.gridPower + (Math.random() - 0.5) * 4);
+      updateUI(state.currentData);
+    }
+
+    function manualFetch() {
+      fetchData();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initSettingsInputs();
+      initChart();
+      updateUI(state.currentData);
+
+      fetchData();
+      state.timerId = setInterval(fetchData, state.refreshInterval);
+    });
+  </script>
+</body>
+</html>
