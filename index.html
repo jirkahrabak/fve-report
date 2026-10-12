@@ -480,7 +480,7 @@
     };
 
     const state = {
-      refreshInterval: 10000,
+      refreshInterval: 15000,
       timerId: null,
       chartInstance: null,
       lastApiResponse: null,
@@ -853,10 +853,10 @@
 
       Object.entries(devices).forEach(([rawDevId, dev]) => {
         if (!dev || typeof dev !== 'object') return;
-        const devId = String(rawDevId).toLowerCase();
+        const devId = String(rawDevId).toLowerCase().replace(/^shelly[a-z0-9]+-/, '').trim();
 
         // 1. Celková EL. z GRIDu (Grid Guard 3-fázový Pro 3EM: 9454c5b957a0)
-        if (devId === '9454c5b957a0' || (dev['em:0'] && !dev['em1:0'])) {
+        if (devId === '9454c5b957a0') {
           detectedRoles.push({ id: rawDevId, name: 'El-celkove', role: 'Celková EL. z GRIDu (Pro 3EM)' });
 
           if (dev['em:0']) {
@@ -869,57 +869,92 @@
             state.currentData.gridL2Power = Number(em0.b_act_power || 0);
             state.currentData.gridL3Power = Number(em0.c_act_power || 0);
             state.currentData.gridVoltage = Number(em0.a_voltage || 235);
-          } else if (dev.emeters) {
+          } else if (dev.emeters && Array.isArray(dev.emeters)) {
             let sumP = 0;
             dev.emeters.forEach((em, idx) => {
               sumP += (em.power || 0);
-              if (idx === 0) state.currentData.gridL1 = Number(em.current || 0);
-              if (idx === 1) state.currentData.gridL2 = Number(em.current || 0);
-              if (idx === 2) state.currentData.gridL3 = Number(em.current || 0);
+              if (idx === 0) {
+                state.currentData.gridL1 = Number(em.current || 0);
+                state.currentData.gridL1Power = Number(em.power || 0);
+              }
+              if (idx === 1) {
+                state.currentData.gridL2 = Number(em.current || 0);
+                state.currentData.gridL2Power = Number(em.power || 0);
+              }
+              if (idx === 2) {
+                state.currentData.gridL3 = Number(em.current || 0);
+                state.currentData.gridL3Power = Number(em.power || 0);
+              }
             });
-            state.currentData.gridPower = sumP;
+            state.currentData.gridPower = dev.total_power !== undefined ? Number(dev.total_power) : sumP;
+            if (dev.emeters[0] && dev.emeters[0].voltage) {
+              state.currentData.gridVoltage = Number(dev.emeters[0].voltage);
+            }
           }
 
           if (dev['emdata:0']) {
             state.currentData.gridTotalImportKwh = Number((dev['emdata:0'].total_act || 0) / 1000);
             state.currentData.gridTotalExportKwh = Number((dev['emdata:0'].total_act_ret || 0) / 1000);
+          } else if (dev.emeters) {
+            let totalWh = 0;
+            dev.emeters.forEach(em => { totalWh += (em.total || 0); });
+            state.currentData.gridTotalImportKwh = Number(totalWh / 1000);
           }
 
           if (dev['boolean:200'] !== undefined) {
             state.currentData.blocked4kw = !!dev['boolean:200'].value;
+          }
+          if (dev['boolean:201'] !== undefined) {
+            state.currentData.blocked9kw = !!dev['boolean:201'].value;
           }
         }
 
         // 2. Victron FV okruh VE500 (485519035845 - Shelly 1PM)
         else if (devId === '485519035845') {
           detectedRoles.push({ id: rawDevId, name: 'VE500', role: 'FV Okruh VE500 (500VA)' });
-          if (dev.meters && dev.meters[0]) {
-            state.currentData.ve500Power = Math.max(0, Number(dev.meters[0].power || 0));
-          }
-          if (dev.relays && dev.relays[0]) {
-            state.currentData.ve500RelayOn = !!dev.relays[0].ison;
-          }
-          if (dev.temperature !== undefined) {
-            state.currentData.ve500Temp = Number(dev.temperature);
+          if (dev['switch:0']) {
+            state.currentData.ve500Power = Math.max(0, Number(dev['switch:0'].apower || 0));
+            state.currentData.ve500RelayOn = !!dev['switch:0'].output;
+            if (dev['temperature:0'] && dev['temperature:0'].tC !== undefined) {
+              state.currentData.ve500Temp = Number(dev['temperature:0'].tC);
+            }
+          } else {
+            if (dev.meters && dev.meters[0]) {
+              state.currentData.ve500Power = Math.max(0, Number(dev.meters[0].power || 0));
+            }
+            if (dev.relays && dev.relays[0]) {
+              state.currentData.ve500RelayOn = !!dev.relays[0].ison;
+            }
+            if (dev.temperature !== undefined) {
+              state.currentData.ve500Temp = Number(dev.temperature);
+            }
           }
         }
 
         // 3. Victron FV okruh VE2000 (e8db84d2c3c9 - Shelly 1PM)
         else if (devId === 'e8db84d2c3c9') {
           detectedRoles.push({ id: rawDevId, name: 'VE2000', role: 'FV Okruh VE2000 (2000VA)' });
-          if (dev.meters && dev.meters[0]) {
-            state.currentData.ve2000Power = Math.max(0, Number(dev.meters[0].power || 0));
-          }
-          if (dev.relays && dev.relays[0]) {
-            state.currentData.ve2000RelayOn = !!dev.relays[0].ison;
-          }
-          if (dev.temperature !== undefined) {
-            state.currentData.ve2000Temp = Number(dev.temperature);
+          if (dev['switch:0']) {
+            state.currentData.ve2000Power = Math.max(0, Number(dev['switch:0'].apower || 0));
+            state.currentData.ve2000RelayOn = !!dev['switch:0'].output;
+            if (dev['temperature:0'] && dev['temperature:0'].tC !== undefined) {
+              state.currentData.ve2000Temp = Number(dev['temperature:0'].tC);
+            }
+          } else {
+            if (dev.meters && dev.meters[0]) {
+              state.currentData.ve2000Power = Math.max(0, Number(dev.meters[0].power || 0));
+            }
+            if (dev.relays && dev.relays[0]) {
+              state.currentData.ve2000RelayOn = !!dev.relays[0].ison;
+            }
+            if (dev.temperature !== undefined) {
+              state.currentData.ve2000Temp = Number(dev.temperature);
+            }
           }
         }
 
         // 4. Solární regulátor EPEver Tracer přes Shelly Pro 1: 5c013b1e5db4
-        else if (devId === '5c013b1e5db4' || dev['number:207']) {
+        else if (devId === '5c013b1e5db4') {
           detectedRoles.push({ id: rawDevId, name: 'Xtra-rs485', role: 'Panely & EPEver Tracer' });
 
           if (dev['number:207']) state.currentData.pvPower = Number(dev['number:207'].value || 0);
@@ -933,7 +968,7 @@
         }
 
         // 5. Solar okruh power (Pro EM Gen3 / BMS napětí článků & predikce): e4b32335d7cc
-        else if (devId === 'e4b32335d7cc' || dev['em1:0']) {
+        else if (devId === 'e4b32335d7cc') {
           detectedRoles.push({ id: rawDevId, name: 'Solar okruh power', role: 'BMS Baterie & Predikce' });
 
           if (dev['number:200']) state.currentData.forecastWh = Math.round(Number(dev['number:200'].value || 0));
@@ -943,7 +978,7 @@
         }
 
         // 6. Pomocné dobíjení (Plus 1PM): b48a0a214a54
-        else if (devId === 'b48a0a214a54' || (dev['switch:0'] && dev['switch:0'].aenergy)) {
+        else if (devId === 'b48a0a214a54') {
           detectedRoles.push({ id: rawDevId, name: 'Fv dobijeni', role: 'Pomocné dobíjení' });
 
           if (dev['switch:0']) {
@@ -953,7 +988,7 @@
         }
 
         // 7. Meteostanice WS90: XB211299191617650
-        else if (devId === 'xb211299191617650' || dev['illuminance:0']) {
+        else if (devId === 'xb211299191617650') {
           detectedRoles.push({ id: rawDevId, name: 'Meteo-ws90', role: 'Meteostanice WS90' });
 
           if (dev['illuminance:0']) state.currentData.wsLux = Math.round(Number(dev['illuminance:0'].lux || 0));

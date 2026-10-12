@@ -86,9 +86,14 @@ export async function onRequestGet(context) {
     const allStatuses = json.data.devices_status;
     const results = {};
 
-    for (const devId of deviceIds) {
-      if (allStatuses[devId]) {
-        results[devId] = allStatuses[devId];
+    for (const rawId of deviceIds) {
+      const cleanId = rawId.trim().toLowerCase().replace(/^shelly[a-z0-9]+-/, '');
+      const matchedKey = Object.keys(allStatuses).find(k => {
+        const cleanK = k.toLowerCase().replace(/^shelly[a-z0-9]+-/, '').trim();
+        return cleanK === cleanId || k.toLowerCase() === cleanId;
+      });
+      if (matchedKey && allStatuses[matchedKey]) {
+        results[cleanId] = allStatuses[matchedKey];
       }
     }
 
