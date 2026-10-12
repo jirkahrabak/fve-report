@@ -11,7 +11,7 @@ const FALLBACK_DEVICE_IDS = [
   'XB211299191617650', // Meteostanice WS90
   'ec62608862a4',      // Kotel (teplota kotle & komína)
   'ec626091f9a4',      // Smesovac-AKU (směšovač cover:0 & čidla AKU / okruh)
-  'ece334e968a8'       // El-patrony-Pro3 (4kW a 7.5kW patrony)
+  'ece334e968a8'       // Shelly Pro 3 (čerpadlo okruhu & 4kW / 7.5kW patrony)
 ];
 
 /**

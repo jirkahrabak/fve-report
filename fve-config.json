@@ -71,7 +71,7 @@
       "name": "El-patrony-Pro3",
       "model": "Pro3",
       "ip": "192.168.100.32",
-      "role": "Elektrické patrony v AKU (Relé 1: 4kW, Relé 2: 7.5kW)"
+      "role": "Shelly Pro 3 (Relé 0: Čerpadlo okruhu, Relé 1: 4kW patrona, Relé 2: 7.5kW patrona)"
     }
   ]
 }
