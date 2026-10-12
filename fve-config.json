@@ -55,16 +55,16 @@
     {
       "id": "ec62608862a4",
       "name": "Kotel",
-      "model": "PlusAddOn",
+      "model": "Pro2PM",
       "ip": "192.168.100.74",
-      "role": "Teplota Kotel (čidlo temperature:100)"
+      "role": "Kotel (100: Kotel, 101: Komín, 102: Komín výstup, voltmetr: 100)"
     },
     {
       "id": "ec626091f9a4",
-      "name": "AKU1P",
-      "model": "PlusAddOn",
+      "name": "Smesovac-AKU",
+      "model": "Pro2PM",
       "ip": "192.168.100.31",
-      "role": "Teplota AKU nádrže (čidlo temperature:101)"
+      "role": "Směšovač (cover:0) & AKU (100:AKU1H, 101:AKU1P, 102:AKU1S) & Topný okruh (103:Okruh1, 104:Vratka, 105:Vstup, 106:TUV)"
     },
     {
       "id": "ece334e968a8",
