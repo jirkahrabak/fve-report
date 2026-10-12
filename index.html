@@ -141,37 +141,51 @@
         </div>
       </div>
 
-      <!-- Victron Load & Mode -->
+      <!-- Victron Okruhy (VE500 & VE2000) -->
       <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
         <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
         <div class="flex items-center justify-between text-slate-400 mb-2">
-          <span class="text-xs font-medium uppercase tracking-wider">Victron Okruh</span>
+          <span class="text-xs font-medium uppercase tracking-wider">FV Okruhy (Victron)</span>
           <div class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400"><i data-lucide="zap" class="w-4 h-4"></i></div>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiVictronLoad">136.7</span>
+          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiVictronLoad">0.0</span>
           <span class="text-sm font-semibold text-indigo-400">W</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 ml-auto" id="kpiVictronMode">VE500 + VE2000</span>
         </div>
-        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-          <span>Režim: <span class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300" id="kpiVictronMode">SÍŤ (GRID)</span></span>
-          <span id="kpiVictronPermit">FVE nepovolena</span>
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">VE500 (485519035845):</span>
+            <span class="font-mono"><strong class="text-indigo-300" id="kpiVe500Val">0 W</strong> <span id="kpiVe500Relay" class="text-[10px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 ml-1">OFF</span></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">VE2000 (e8db84d2c3c9):</span>
+            <span class="font-mono"><strong class="text-indigo-300" id="kpiVe2000Val">0 W</strong> <span id="kpiVe2000Relay" class="text-[10px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 ml-1">OFF</span></span>
+          </div>
         </div>
       </div>
 
-      <!-- Grid Power & Protection -->
+      <!-- Celková EL. z GRIDu (Grid Guard 9454c5b957a0) -->
       <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
         <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl group-hover:bg-sky-500/20 transition"></div>
         <div class="flex items-center justify-between text-slate-400 mb-2">
-          <span class="text-xs font-medium uppercase tracking-wider">Dům / Síť (Grid Guard)</span>
+          <span class="text-xs font-medium uppercase tracking-wider">Celková EL. z GRIDu</span>
           <div class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><i data-lucide="plug" class="w-4 h-4"></i></div>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiGridPower">146</span>
+          <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiGridPower">0</span>
           <span class="text-sm font-semibold text-sky-400">W</span>
+          <span class="text-xs font-mono text-slate-400 ml-auto" id="kpiGridVoltage">235 V</span>
         </div>
-        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-          <span id="kpiGridPhases">L1: 0.7A &bull; L2: 0A &bull; L3: 0.1A</span>
-          <span class="text-emerald-400 font-medium" id="kpiGridLocks">4kW/9kW OK</span>
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1 text-xs">
+          <div class="flex items-center justify-between">
+            <span id="kpiGridPhases" class="text-slate-300 font-mono text-[11px]">L1: 0.0A • L2: 0.0A • L3: 0.0A</span>
+            <span class="text-emerald-400 font-medium text-[11px]" id="kpiGridLocks">4kW/9kW OK</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400">
+            <span id="kpiGridPhaseWatts">L1: 0W • L2: 0W • L3: 0W</span>
+            <span id="kpiGridTotals" class="font-mono text-slate-400">Odběr: 0 kWh</span>
+          </div>
         </div>
       </div>
 
@@ -217,38 +231,46 @@
             <!-- Node 3: Center Inverter / Management Hub -->
             <g transform="translate(250, 90)">
               <rect width="100" height="60" rx="14" fill="#0f172a" stroke="#818cf8" stroke-width="2"/>
-              <text x="50" y="25" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">VIC / EPEVER</text>
-              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700" id="flowModeText">Grid Režim</text>
+              <text x="50" y="23" text-anchor="middle" fill="#a5b4fc" font-size="10" font-weight="bold">VE500 + VE2000</text>
+              <text x="50" y="44" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowModeText">0 W</text>
             </g>
 
-            <!-- Node 4: Grid (Distribuce) -->
+            <!-- Node 4: Grid (Distribuce 9454c5b957a0) -->
             <g transform="translate(430, 40)">
               <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
-              <text x="50" y="25" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="bold">⚡ Distribuce Síť</text>
-              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowGridText">146 W</text>
+              <text x="50" y="24" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">⚡ GRID (Dům)</text>
+              <text x="50" y="44" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowGridText">0 W</text>
             </g>
 
             <!-- Node 5: Spotřeba Domu -->
             <g transform="translate(430, 140)">
               <rect width="100" height="60" rx="12" fill="#1e293b" stroke="#c084fc" stroke-width="2"/>
-              <text x="50" y="25" text-anchor="middle" fill="#e9d5ff" font-size="12" font-weight="bold">🏠 Spotřeba okruhu</text>
-              <text x="50" y="45" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowLoadText">137 W</text>
+              <text x="50" y="24" text-anchor="middle" fill="#e9d5ff" font-size="11" font-weight="bold">🏠 Spotřeba celkem</text>
+              <text x="50" y="44" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800" id="flowLoadText">0 W</text>
             </g>
           </svg>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-800 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4 pt-4 border-t border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-400 block">Střídač VE500:</span>
+            <span class="font-bold text-indigo-300" id="txtVe500Stats">0 W (OFF)</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block">Střídač VE2000:</span>
+            <span class="font-bold text-indigo-300" id="txtVe2000Stats">0 W (OFF)</span>
+          </div>
           <div>
             <span class="text-slate-400 block">Teplota regulátoru:</span>
-            <span class="font-bold text-slate-200" id="txtDevTemp">34.3 °C</span>
+            <span class="font-bold text-slate-200" id="txtDevTemp">0.0 °C</span>
           </div>
           <div>
             <span class="text-slate-400 block">Teplota baterie:</span>
-            <span class="font-bold text-slate-200" id="txtBatTemp">25.5 °C</span>
+            <span class="font-bold text-slate-200" id="txtBatTemp">0.0 °C</span>
           </div>
           <div>
             <span class="text-slate-400 block">Meteo WS90 osvit:</span>
-            <span class="font-bold text-amber-300" id="txtWsLux">13 650 Lux</span>
+            <span class="font-bold text-amber-300" id="txtWsLux">0 Lux</span>
           </div>
           <div>
             <span class="text-slate-400 block">Pomocná nabíječka:</span>
@@ -303,10 +325,6 @@
           <button onclick="toggleModal('diagModal')" class="text-xs text-sky-400 hover:text-sky-300 font-medium inline-flex items-center gap-1">
             <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
             Ověřit spojení (RAW JSON)
-          </button>
-          <button onclick="toggleModal('archModal')" class="text-xs text-slate-400 hover:text-slate-300 font-medium inline-flex items-center gap-1">
-            <i data-lucide="code" class="w-3.5 h-3.5"></i>
-            Kód funkce
           </button>
         </div>
       </div>
@@ -451,9 +469,11 @@
       serverUrl: 'https://shelly-137-eu.shelly.cloud',
       authKey: 'NjVlYjl1aWQ08E562AFF6F24770E4F4CB793CFB0651ED7A5D2180550D800E57DE2EEA593B2E9ABC22585559FF56',
       deviceIds: [
-        '9454c5b957a0',      // El-celkove (Grid Guard / Pro 3EM)
-        '5c013b1e5db4',      // Xtra-rs485 (EPEver solární regulátor)
-        'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / Victron + BMS)
+        '9454c5b957a0',      // El-celkove (Grid Guard / Pro 3EM - Celková EL. z GRIDu)
+        '485519035845',      // VE500 (Victron střídač 500VA / 1PM)
+        'e8db84d2c3c9',      // VE2000 (Victron střídač 2000VA / 1PM)
+        '5c013b1e5db4',      // Xtra-rs485 (EPEver solární regulátor / Pro 1)
+        'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / BMS & predikce)
         'b48a0a214a54',      // Fv dobijeni (Plus 1PM)
         'XB211299191617650'  // Meteostanice WS90
       ]
@@ -482,15 +502,30 @@
         umincell_id: 6,
         umaxcell: 3.27,
         umaxcell_id: 3,
-        victronLoad: 0,
+        // Dva FV okruhy střídačů Victron
+        ve500Power: 0,
+        ve500RelayOn: false,
+        ve500Temp: 0,
+        ve2000Power: 0,
+        ve2000RelayOn: false,
+        ve2000Temp: 0,
+        victronLoad: 0, // Celkem ve500 + ve2000
         victronRelayOn: false,
         victronPermitted: false,
+        // Grid Guard 9454c5b957a0 - Celková EL. z GRIDu
         gridPower: 0,
         gridL1: 0.0,
         gridL2: 0.0,
         gridL3: 0.0,
+        gridL1Power: 0,
+        gridL2Power: 0,
+        gridL3Power: 0,
+        gridVoltage: 235,
+        gridTotalImportKwh: 0,
+        gridTotalExportKwh: 0,
         blocked4kw: false,
         blocked9kw: false,
+        // Pomocné dobíjení a meteo
         auxMode: 'IDLE',
         auxPower: 0,
         forecastWh: 0,
@@ -638,47 +673,71 @@
     }
 
     function updateUI(d) {
-      // 1. PV Panels
+      // 1. PV Panely (EPEver solární regulátor)
       document.getElementById('kpiPvPower').textContent = d.pvPower.toFixed(1);
       document.getElementById('kpiPvMetrics').textContent = `${d.pvVoltage.toFixed(1)} V • ${d.pvCurrent.toFixed(1)} A`;
       document.getElementById('kpiEnergyToday').textContent = `${d.energyToday.toFixed(2)} kWh`;
 
-      // 2. Battery
+      // 2. Baterie LiFePO4
       document.getElementById('kpiSoc').textContent = d.batSoc;
       document.getElementById('kpiBatVoltage').textContent = `${d.batVoltage.toFixed(2)} V`;
       document.getElementById('kpiBatCurrent').textContent = `${d.batCurrent >= 0 ? '+' : ''}${d.batCurrent.toFixed(1)} A`;
       document.getElementById('kpiUdiff').textContent = `${d.udiff.toFixed(2)} V`;
 
-      // 3. Victron Okruh
+      // 3. FV Okruhy Victron (VE500 a VE2000)
       document.getElementById('kpiVictronLoad').textContent = d.victronLoad.toFixed(1);
-      const vMode = document.getElementById('kpiVictronMode');
-      if (d.victronRelayOn) {
-        vMode.textContent = 'MĚNIČ (FVE)';
-        vMode.className = 'px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300';
-      } else {
-        vMode.textContent = 'SÍŤ (GRID)';
-        vMode.className = 'px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300';
+      document.getElementById('kpiVe500Val').textContent = `${d.ve500Power.toFixed(1)} W`;
+      const ve500Relay = document.getElementById('kpiVe500Relay');
+      if (ve500Relay) {
+        ve500Relay.textContent = d.ve500RelayOn ? 'ON' : 'OFF';
+        ve500Relay.className = d.ve500RelayOn ? 'text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold ml-1' : 'text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 ml-1';
       }
-      document.getElementById('kpiVictronPermit').textContent = d.victronPermitted ? 'FVE Povolena' : 'FVE nepovolena';
 
-      // 4. Grid Guard
+      document.getElementById('kpiVe2000Val').textContent = `${d.ve2000Power.toFixed(1)} W`;
+      const ve2000Relay = document.getElementById('kpiVe2000Relay');
+      if (ve2000Relay) {
+        ve2000Relay.textContent = d.ve2000RelayOn ? 'ON' : 'OFF';
+        ve2000Relay.className = d.ve2000RelayOn ? 'text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold ml-1' : 'text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 ml-1';
+      }
+
+      const vMode = document.getElementById('kpiVictronMode');
+      if (vMode) {
+        if (d.victronRelayOn) {
+          vMode.textContent = 'MĚNIČE AKTIVNÍ';
+          vMode.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 ml-auto';
+        } else {
+          vMode.textContent = 'VYPNUTO / BYPASS';
+          vMode.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 ml-auto';
+        }
+      }
+
+      // 4. Celková EL. z GRIDu (Grid Guard 9454c5b957a0)
       document.getElementById('kpiGridPower').textContent = Math.round(d.gridPower);
+      document.getElementById('kpiGridVoltage').textContent = `${Math.round(d.gridVoltage)} V`;
       document.getElementById('kpiGridPhases').textContent = `L1: ${d.gridL1.toFixed(1)}A • L2: ${d.gridL2.toFixed(1)}A • L3: ${d.gridL3.toFixed(1)}A`;
+      document.getElementById('kpiGridPhaseWatts').textContent = `L1: ${Math.round(d.gridL1Power)}W • L2: ${Math.round(d.gridL2Power)}W • L3: ${Math.round(d.gridL3Power)}W`;
       document.getElementById('kpiGridLocks').textContent = (d.blocked4kw || d.blocked9kw) ? 'Blokace aktivní' : '4kW/9kW OK';
+      if (d.gridTotalImportKwh > 0) {
+        document.getElementById('kpiGridTotals').textContent = `Odběr: ${d.gridTotalImportKwh.toFixed(0)} kWh`;
+      }
 
       // Synoptic Flow SVG
       document.getElementById('flowPvText').textContent = `${Math.round(d.pvPower)} W`;
       document.getElementById('flowBatText').textContent = `${d.batSoc}% (${d.batVoltage.toFixed(1)}V)`;
-      document.getElementById('flowModeText').textContent = d.victronRelayOn ? 'Victron FVE' : 'Victron Bypass';
+      document.getElementById('flowModeText').textContent = `${Math.round(d.victronLoad)} W`;
       document.getElementById('flowGridText').textContent = `${Math.round(d.gridPower)} W`;
-      document.getElementById('flowLoadText').textContent = `${Math.round(d.victronLoad)} W`;
+      // Celková spotřeba domu = příkon z distribuce + výkon z Victron měničů
+      const totalHouseConsumption = Math.max(0, d.gridPower + d.victronLoad);
+      document.getElementById('flowLoadText').textContent = `${Math.round(totalHouseConsumption)} W`;
 
-      // Diagnostics & Meteo
-      document.getElementById('forecastVal').textContent = `${d.forecastWh} Wh/m²`;
+      // Spodní detailní statistiky
+      document.getElementById('txtVe500Stats').textContent = `${d.ve500Power.toFixed(0)} W (${d.ve500RelayOn ? 'ON' : 'OFF'})`;
+      document.getElementById('txtVe2000Stats').textContent = `${d.ve2000Power.toFixed(0)} W (${d.ve2000RelayOn ? 'ON' : 'OFF'})`;
       document.getElementById('txtDevTemp').textContent = `${d.ctrlTemp} °C`;
       document.getElementById('txtBatTemp').textContent = `${d.batTemp} °C`;
       document.getElementById('txtWsLux').textContent = `${d.wsLux.toLocaleString('cs-CZ')} Lux`;
       document.getElementById('txtAuxCharger').textContent = `${d.auxMode} (${d.auxPower} W)`;
+      document.getElementById('forecastVal').textContent = `${d.forecastWh} Wh/m²`;
 
       // BMS Cells Summary
       document.getElementById('cellMinVal').textContent = `${d.umincell.toFixed(2)} V (C${d.umincell_id})`;
@@ -697,13 +756,13 @@
         state.chartInstance.update();
       }
 
-      appendLogRecord(d);
+      appendLogRecord(d, totalHouseConsumption);
 
       const now = new Date();
       document.getElementById('lastUpdatedText').textContent = now.toLocaleTimeString('cs-CZ');
     }
 
-    function appendLogRecord(d) {
+    function appendLogRecord(d, totalHouse) {
       const tbody = document.getElementById('logsTableBody');
       const time = new Date().toLocaleTimeString('cs-CZ');
       const tr = document.createElement('tr');
@@ -711,8 +770,8 @@
       tr.innerHTML = `
         <td class="py-2 px-2 text-slate-400 whitespace-nowrap">${time}</td>
         <td class="py-2 px-2 text-amber-400 font-semibold">${d.pvPower.toFixed(0)} W</td>
-        <td class="py-2 px-2 text-emerald-400">${d.batVoltage.toFixed(1)}V (${d.batSoc}%)</td>
-        <td class="py-2 px-2 text-sky-400">${Math.round(d.gridPower)} W</td>
+        <td class="py-2 px-2 text-indigo-300">${d.victronLoad.toFixed(0)} W (V5:${d.ve500Power.toFixed(0)}/V2:${d.ve2000Power.toFixed(0)})</td>
+        <td class="py-2 px-2 text-sky-400 font-semibold">${Math.round(d.gridPower)} W</td>
       `;
       tbody.prepend(tr);
       while (tbody.children.length > 8) {
@@ -754,7 +813,7 @@
           console.warn('Přímé volání Shelly neprošlo, zkouším Cloudflare endpoint:', directErr);
         }
 
-        // 2. Záložní metoda: pokud direct fetch selže (např. lokální restrikce), zkusíme /api/fve-status
+        // 2. Záložní metoda: pokud direct fetch selže, zkusíme /api/fve-status
         if (!devices) {
           const response = await fetch('/api/fve-status', { cache: 'no-store' });
           state.lastHttpCode = response.status;
@@ -786,7 +845,7 @@
       }
     }
 
-    // Parsování reálných struktur ze Shelly Cloud pro 5 zařízení
+    // Parsování reálných struktur ze Shelly Cloud pro všechna FVE zařízení
     function parseShellyPayload(devices) {
       if (!devices || typeof devices !== 'object') return;
 
@@ -796,16 +855,20 @@
         if (!dev || typeof dev !== 'object') return;
         const devId = String(rawDevId).toLowerCase();
 
-        // 1. Grid Guard (3-fázový elektroměr Shelly Pro 3EM na patě domu: 9454c5b957a0)
-        if (devId === '9454c5b957a0' || dev['em:0'] || dev.emeters) {
-          detectedRoles.push({ id: rawDevId, name: 'El-celkove', role: 'Grid Guard (Pro 3EM)' });
+        // 1. Celková EL. z GRIDu (Grid Guard 3-fázový Pro 3EM: 9454c5b957a0)
+        if (devId === '9454c5b957a0' || (dev['em:0'] && !dev['em1:0'])) {
+          detectedRoles.push({ id: rawDevId, name: 'El-celkove', role: 'Celková EL. z GRIDu (Pro 3EM)' });
 
           if (dev['em:0']) {
             const em0 = dev['em:0'];
-            state.currentData.gridPower = Number(em0.total_act_power ?? ((em0.a_act_power || 0) + (em0.b_act_power || 0) + (em0.c_act_power || 0)));
+            state.currentData.gridPower = Number(em0.total_act_power !== undefined ? em0.total_act_power : ((em0.a_act_power || 0) + (em0.b_act_power || 0) + (em0.c_act_power || 0)));
             state.currentData.gridL1 = Number(em0.a_current || 0);
             state.currentData.gridL2 = Number(em0.b_current || 0);
             state.currentData.gridL3 = Number(em0.c_current || 0);
+            state.currentData.gridL1Power = Number(em0.a_act_power || 0);
+            state.currentData.gridL2Power = Number(em0.b_act_power || 0);
+            state.currentData.gridL3Power = Number(em0.c_act_power || 0);
+            state.currentData.gridVoltage = Number(em0.a_voltage || 235);
           } else if (dev.emeters) {
             let sumP = 0;
             dev.emeters.forEach((em, idx) => {
@@ -817,12 +880,45 @@
             state.currentData.gridPower = sumP;
           }
 
-          if (dev['boolean:200']) {
+          if (dev['emdata:0']) {
+            state.currentData.gridTotalImportKwh = Number((dev['emdata:0'].total_act || 0) / 1000);
+            state.currentData.gridTotalExportKwh = Number((dev['emdata:0'].total_act_ret || 0) / 1000);
+          }
+
+          if (dev['boolean:200'] !== undefined) {
             state.currentData.blocked4kw = !!dev['boolean:200'].value;
           }
         }
 
-        // 2. Solární regulátor EPEver Tracer přes Shelly Pro 1: 5c013b1e5db4
+        // 2. Victron FV okruh VE500 (485519035845 - Shelly 1PM)
+        else if (devId === '485519035845') {
+          detectedRoles.push({ id: rawDevId, name: 'VE500', role: 'FV Okruh VE500 (500VA)' });
+          if (dev.meters && dev.meters[0]) {
+            state.currentData.ve500Power = Math.max(0, Number(dev.meters[0].power || 0));
+          }
+          if (dev.relays && dev.relays[0]) {
+            state.currentData.ve500RelayOn = !!dev.relays[0].ison;
+          }
+          if (dev.temperature !== undefined) {
+            state.currentData.ve500Temp = Number(dev.temperature);
+          }
+        }
+
+        // 3. Victron FV okruh VE2000 (e8db84d2c3c9 - Shelly 1PM)
+        else if (devId === 'e8db84d2c3c9') {
+          detectedRoles.push({ id: rawDevId, name: 'VE2000', role: 'FV Okruh VE2000 (2000VA)' });
+          if (dev.meters && dev.meters[0]) {
+            state.currentData.ve2000Power = Math.max(0, Number(dev.meters[0].power || 0));
+          }
+          if (dev.relays && dev.relays[0]) {
+            state.currentData.ve2000RelayOn = !!dev.relays[0].ison;
+          }
+          if (dev.temperature !== undefined) {
+            state.currentData.ve2000Temp = Number(dev.temperature);
+          }
+        }
+
+        // 4. Solární regulátor EPEver Tracer přes Shelly Pro 1: 5c013b1e5db4
         else if (devId === '5c013b1e5db4' || dev['number:207']) {
           detectedRoles.push({ id: rawDevId, name: 'Xtra-rs485', role: 'Panely & EPEver Tracer' });
 
@@ -836,19 +932,17 @@
           if (dev['number:204']) state.currentData.ctrlTemp = Number(dev['number:204'].value || 0);
         }
 
-        // 3. Solar okruh power (Pro EM Gen3 / Victron měnič + predikce): e4b32335d7cc
+        // 5. Solar okruh power (Pro EM Gen3 / BMS napětí článků & predikce): e4b32335d7cc
         else if (devId === 'e4b32335d7cc' || dev['em1:0']) {
-          detectedRoles.push({ id: rawDevId, name: 'Solar okruh power', role: 'Victron Okruh & FVE' });
+          detectedRoles.push({ id: rawDevId, name: 'Solar okruh power', role: 'BMS Baterie & Predikce' });
 
-          if (dev['em1:0']) state.currentData.victronLoad = Number(dev['em1:0'].act_power || 0);
-          if (dev['switch:0']) state.currentData.victronRelayOn = !!dev['switch:0'].output;
           if (dev['number:200']) state.currentData.forecastWh = Math.round(Number(dev['number:200'].value || 0));
           if (dev['number:201']) state.currentData.udiff = Number(dev['number:201'].value || 0);
           if (dev['boolean:201'] !== undefined) state.currentData.victronPermitted = !!dev['boolean:201'].value;
           else if (dev['boolean:200'] !== undefined) state.currentData.victronPermitted = !!dev['boolean:200'].value;
         }
 
-        // 4. Pomocné dobíjení (Plus 1PM): b48a0a214a54
+        // 6. Pomocné dobíjení (Plus 1PM): b48a0a214a54
         else if (devId === 'b48a0a214a54' || (dev['switch:0'] && dev['switch:0'].aenergy)) {
           detectedRoles.push({ id: rawDevId, name: 'Fv dobijeni', role: 'Pomocné dobíjení' });
 
@@ -858,13 +952,17 @@
           }
         }
 
-        // 5. Meteostanice WS90: XB211299191617650
+        // 7. Meteostanice WS90: XB211299191617650
         else if (devId === 'xb211299191617650' || dev['illuminance:0']) {
           detectedRoles.push({ id: rawDevId, name: 'Meteo-ws90', role: 'Meteostanice WS90' });
 
           if (dev['illuminance:0']) state.currentData.wsLux = Math.round(Number(dev['illuminance:0'].lux || 0));
         }
       });
+
+      // Spočítáme celkovou zátěž ze střídačů Victron (VE500 + VE2000)
+      state.currentData.victronLoad = state.currentData.ve500Power + state.currentData.ve2000Power;
+      state.currentData.victronRelayOn = state.currentData.ve500RelayOn || state.currentData.ve2000RelayOn;
 
       renderDetectedRoles(detectedRoles);
       updateUI(state.currentData);

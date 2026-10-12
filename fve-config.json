@@ -19,11 +19,25 @@
       "role": "Solární regulátor EPEver Tracer (RS485 modbus data)"
     },
     {
+      "id": "485519035845",
+      "name": "VE500",
+      "model": "1PM",
+      "ip": "192.168.100.38",
+      "role": "Victron VE500 (okruh střídače 500VA)"
+    },
+    {
+      "id": "e8db84d2c3c9",
+      "name": "VE2000",
+      "model": "1PM",
+      "ip": "192.168.100.37",
+      "role": "Victron VE2000 (okruh střídače 2000VA)"
+    },
+    {
       "id": "e4b32335d7cc",
       "name": "Solar okruh power",
       "model": "EMG3",
       "ip": "192.168.100.40",
-      "role": "BMS Baterie LiFePO4 & Victron měnič (střídač)"
+      "role": "BMS Baterie LiFePO4 & Victron dohled"
     },
     {
       "id": "b48a0a214a54",

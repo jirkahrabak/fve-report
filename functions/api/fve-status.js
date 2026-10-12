@@ -3,8 +3,10 @@ import defaultConfig from '../../fve-config.json';
 // Záložní výchozí ID zařízení (přesné hex ID ze Shelly Cloud)
 const FALLBACK_DEVICE_IDS = [
   '9454c5b957a0',      // El-celkove (Grid Guard / Pro 3EM)
+  '485519035845',      // VE500 (Victron střídač 500VA / 1PM)
+  'e8db84d2c3c9',      // VE2000 (Victron střídač 2000VA / 1PM)
   '5c013b1e5db4',      // Xtra-rs485 (EPEver solární regulátor)
-  'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / Victron + BMS)
+  'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / BMS & predikce)
   'b48a0a214a54',      // Fv dobijeni (Plus 1PM)
   'XB211299191617650'  // Meteostanice WS90
 ];
