@@ -5,28 +5,28 @@
   "description": "Konfigurace Shelly zařízení sledovaných v FVE dashboardu pro Cloudflare Pages Function (/api/fve-status).",
   "devices": [
     {
-      "id": "shellypro3em-9454c5b957a0",
+      "id": "9454c5b957a0",
       "name": "El-celkove",
       "model": "Pro3EM",
       "ip": "192.168.100.251",
       "role": "Grid Guard (3-fázový elektroměr na patě domu)"
     },
     {
-      "id": "shellypro1-5c013b1e5db4",
+      "id": "5c013b1e5db4",
       "name": "Xtra-rs485",
       "model": "Pro1",
       "ip": "192.168.100.42",
       "role": "Solární regulátor EPEver Tracer (RS485 modbus data)"
     },
     {
-      "id": "shellyemg3-e4b32335d7cc",
+      "id": "e4b32335d7cc",
       "name": "Solar okruh power",
       "model": "EMG3",
       "ip": "192.168.100.40",
       "role": "BMS Baterie LiFePO4 & Victron měnič (střídač)"
     },
     {
-      "id": "shellyplus1pm-b48a0a214a54",
+      "id": "b48a0a214a54",
       "name": "Fv dobijeni",
       "model": "Plus1PM",
       "ip": "192.168.100.39",

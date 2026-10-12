@@ -67,11 +67,11 @@
             <span id="connectionBadgeText">Ověřuji spojení...</span>
           </span>
         </div>
-        <p class="text-xs text-slate-400">Cloudflare Pages Function &bull; Shelly Cloud (shelly-137-eu.shelly.cloud)</p>
+        <p class="text-xs text-slate-400">Shelly Cloud API (shelly-137-eu.shelly.cloud) &bull; Přímý dohled</p>
       </div>
     </div>
 
-    <!-- Right Controls: Auto-refresh, Last Update, Diagnostics, Cloudflare Code, Settings -->
+    <!-- Right Controls: Auto-refresh, Last Update, Diagnostics -->
     <div class="flex items-center gap-2">
       <div class="text-right hidden sm:block mr-2">
         <div class="text-[11px] text-slate-400">Poslední obnova:</div>
@@ -83,19 +83,9 @@
         <span class="hidden md:inline">Obnovit</span>
       </button>
 
-      <button onclick="toggleModal('diagModal')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium" title="Diagnostika HTTP a Raw odpovědi z API">
+      <button onclick="toggleModal('diagModal')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium" title="Diagnostika HTTP a Raw odpovědi ze Shelly API">
         <i data-lucide="terminal" class="w-4 h-4 text-sky-400"></i>
         <span class="hidden sm:inline">Diagnostika</span>
-      </button>
-
-      <button onclick="toggleModal('archModal')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium" title="Architektura Cloudflare Pages & API">
-        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-        <span class="hidden sm:inline">Kód pro Cloudflare</span>
-      </button>
-
-      <button onclick="toggleModal('settingsModal')" class="p-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition flex items-center gap-1.5 text-xs" title="Nastavení koncového bodu">
-        <i data-lucide="settings" class="w-4 h-4"></i>
-        <span>Zdroj dat</span>
       </button>
     </div>
   </header>
@@ -454,261 +444,57 @@
     </div>
   </div>
 
-  <div id="archModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-shrink-0">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i data-lucide="code" class="w-5 h-5 text-emerald-400"></i>
-          Kód pro Cloudflare Pages Function
-        </h3>
-        <button onclick="toggleModal('archModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto space-y-3 text-xs">
-        <p class="text-slate-300">
-          Uložte tento kód do souboru 
-          <code class="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">functions/api/fve-status.js</code>. 
-          Zařízení se načítají ze souboru <code class="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">fve-config.json</code> nebo z proměnné <code class="text-slate-300">SHELLY_DEVICE_IDS</code>:
-        </p>
-
-        <div class="relative">
-          <button onclick="copyWorkerCode()" id="copyBtn" class="absolute top-2 right-2 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-medium flex items-center gap-1">
-            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Kopírovat kód
-          </button>
-          <pre id="workerCodeBlock" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed max-h-72 select-all">import defaultConfig from '../../fve-config.json';
-
-// Záložní výchozí ID zařízení, pokud by config nebyl k dispozici
-const FALLBACK_DEVICE_IDS = [
-  'shellypro3em-9454c5b957a0', // El-celkove (Grid Guard)
-  'shellypro1-5c013b1e5db4',   // Xtra-rs485 (EPEver solární regulátor)
-  'shellyemg3-e4b32335d7cc',   // Solar okruh power (BMS + Victron)
-  'shellyplus1pm-b48a0a214a54', // Fv dobijeni
-  'XB211299191617650'          // Meteo stanice WS90
-];
-
-/**
- * Cloudflare Pages Function: /api/fve-status
- * Uložte jako: functions/api/fve-status.js
- */
-export async function onRequestGet(context) {
-  const { env } = context;
-
-  const authKey = env.SHELLY_AUTH_KEY;
-  const serverUrl = env.SHELLY_SERVER_URL || defaultConfig?.shellyServerUrl || 'https://shelly-137-eu.shelly.cloud';
-  const deviceIdsRaw = env.SHELLY_DEVICE_IDS || '';
-
-  if (!authKey) {
-    return new Response(JSON.stringify({ 
-      error: 'SHELLY_AUTH_KEY není nastaven v Cloudflare Environment Secrets.',
-      hint: 'Přejděte do Cloudflare Pages -> Settings -> Environment variables a přidejte SHELLY_AUTH_KEY (zaškrtněte Encrypt/Secret).'
-    }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  const baseUrl = serverUrl.replace(/\/$/, '');
-  let deviceIds = [];
-  let configSource = 'fallback';
-
-  // 1. Priorita: Nastavení v proměnných prostředí Cloudflare (SHELLY_DEVICE_IDS)
-  if (deviceIdsRaw) {
-    deviceIds = deviceIdsRaw.split(',').map(s => s.trim()).filter(Boolean);
-    if (deviceIds.length > 0) configSource = 'env (SHELLY_DEVICE_IDS)';
-  }
-
-  // 2. Priorita: Konfigurace ze souboru fve-config.json
-  if (deviceIds.length === 0 && defaultConfig?.devices) {
-    if (Array.isArray(defaultConfig.devices)) {
-      deviceIds = defaultConfig.devices
-        .map(d => (typeof d === 'string' ? d : (d.id || d.device_id)))
-        .filter(Boolean);
-    } else if (typeof defaultConfig.devices === 'object') {
-      deviceIds = Object.keys(defaultConfig.devices);
-    }
-    if (deviceIds.length > 0) configSource = 'fve-config.json';
-  }
-
-  // 3. Priorita: Bezpečný fallback (známá FVE zařízení)
-  if (deviceIds.length === 0) {
-    deviceIds = [...FALLBACK_DEVICE_IDS];
-    configSource = 'built-in fallback';
-  }
-
-  // Ochrana před limitem Cloudflare Workers (max 50 subrequestů na volání workeru)
-  if (deviceIds.length > 40) {
-    deviceIds = deviceIds.slice(0, 40);
-  }
-
-  const results = {};
-  const errors = {};
-
-  try {
-    // Paralelní stažení stavu všech vybraných zařízení pro maximální rychlost
-    await Promise.all(
-      deviceIds.map(async (devId) => {
-        try {
-          const url = `${baseUrl}/device/status?id=${encodeURIComponent(devId)}&auth_key=${encodeURIComponent(authKey)}`;
-          const res = await fetch(url, { headers: { 'User-Agent': 'Cloudflare-Pages-FVE/1.0' } });
-          if (res.ok) {
-            const json = await res.json();
-            if (json.isok && json.data) {
-              results[devId] = json.data.device_status;
-            } else {
-              errors[devId] = json.errors || json;
-            }
-          } else {
-            errors[devId] = `HTTP ${res.status}`;
-          }
-        } catch (fetchErr) {
-          errors[devId] = fetchErr.message;
-        }
-      })
-    );
-
-    return new Response(JSON.stringify({ 
-      success: Object.keys(results).length > 0, 
-      timestamp: Date.now(),
-      server: baseUrl,
-      configSource: configSource,
-      configuredDeviceCount: deviceIds.length,
-      devices: results,
-      errors: Object.keys(errors).length > 0 ? errors : undefined
-    }), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
-      }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { 
-      status: 502,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-}</pre>
-        </div>
-
-        <div class="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/80 space-y-2">
-          <div class="font-semibold text-sky-300">Struktura projektu v repozitáři:</div>
-          <pre class="font-mono text-[11px] text-amber-300 bg-slate-950/70 p-2 rounded-lg">
-moje-fve-app/
-├── index.html                  (tento dashboard)
-├── fve-config.json             (konfigurace zařízení, názvů a rolí pro FVE)
-└── functions/
-    └── api/
-        └── fve-status.js       (Cloudflare Pages Function)
-          </pre>
-          <div class="text-[11px] text-slate-400">
-            V Cloudflare administraci nastavíte pouze:
-            <code class="text-slate-200">SHELLY_AUTH_KEY</code> (jako Encrypted Secret).
-            Zařízení se automaticky čtou z <code class="text-amber-300">fve-config.json</code> (případně lze přepsat proměnnou <code class="text-slate-200">SHELLY_DEVICE_IDS</code>).
-          </div>
-        </div>
-      </div>
-
-      <div class="flex justify-end pt-2 border-t border-slate-800">
-        <button onclick="toggleModal('archModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">Rozumím</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="settingsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i data-lucide="sliders" class="w-5 h-5 text-amber-400"></i>
-          Nastavení připojení k Shelly Cloud
-        </h3>
-        <button onclick="toggleModal('settingsModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <div>
-          <label class="block font-medium text-slate-300 mb-1">Režim zdroje dat:</label>
-          <select id="apiModeSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
-            <option value="cf_function">Cloudflare Pages Function (/api/fve-status) &ndash; Doporučeno & Bezpečné</option>
-            <option value="demo">Demo Režim (Ukázková telemetrie z FVE)</option>
-            <option value="shelly_direct">Přímé volání Shelly Cloud (přes prohlížeč)</option>
-          </select>
-        </div>
-
-        <div id="cfFunctionGroup" class="space-y-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 text-[11px]">
-          <strong>Bezpečný serverless režim:</strong> Dashboard se dotazuje na interní koncový bod <code class="font-mono bg-slate-950 px-1 py-0.5 rounded">/api/fve-status</code>. Váš tajný Shelly Auth Key je bezpečně uložen v Cloudflare Secrets a na frontend se nikdy neodešle.
-        </div>
-
-        <div id="shellyDirectGroup" class="space-y-3 hidden">
-          <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300 text-[11px]">
-            ⚠️ V přímém režimu volá prohlížeč Shelly Cloud přímo. Auth klíč se ukládá pouze v localStorage vašeho prohlížeče.
-          </div>
-          <div>
-            <label class="block font-medium text-slate-300 mb-1">Shelly Server URL:</label>
-            <input type="text" id="shellyServerUrl" placeholder="https://shelly-137-eu.shelly.cloud" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100 font-mono focus:ring-1 focus:ring-amber-500">
-          </div>
-          <div>
-            <label class="block font-medium text-slate-300 mb-1">Shelly Auth Key (Token):</label>
-            <input type="password" id="shellyAuthKey" placeholder="váš auth_key ze Shelly Cloud..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100 font-mono focus:ring-1 focus:ring-amber-500">
-          </div>
-          <div>
-            <label class="block font-medium text-slate-300 mb-1">Device IDs (čárkou oddělená ID měřičů):</label>
-            <input type="text" id="shellyDeviceIds" placeholder="id1, id2, id3" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100 font-mono focus:ring-1 focus:ring-amber-500">
-          </div>
-        </div>
-
-      </div>
-
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-        <button onclick="toggleModal('settingsModal')" class="px-3.5 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold">Zavřít</button>
-        <button onclick="saveApiSettings()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow">Uložit & Spustit</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Modals & Diagnostics -->
   <script>
-    // State management strictly based on Shelly Cloud data
+    // Konfigurace Shelly API
+    const SHELLY_CONFIG = {
+      serverUrl: 'https://shelly-137-eu.shelly.cloud',
+      authKey: 'NjVlYjl1aWQ08E562AFF6F24770E4F4CB793CFB0651ED7A5D2180550D800E57DE2EEA593B2E9ABC22585559FF56',
+      deviceIds: [
+        '9454c5b957a0',      // El-celkove (Grid Guard / Pro 3EM)
+        '5c013b1e5db4',      // Xtra-rs485 (EPEver solární regulátor)
+        'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / Victron + BMS)
+        'b48a0a214a54',      // Fv dobijeni (Plus 1PM)
+        'XB211299191617650'  // Meteostanice WS90
+      ]
+    };
+
     const state = {
-      apiMode: 'cf_function',
-      shellyServer: 'https://shelly-137-eu.shelly.cloud',
-      shellyKey: '',
-      shellyIds: '',
       refreshInterval: 10000,
       timerId: null,
       chartInstance: null,
       lastApiResponse: null,
       lastHttpCode: null,
       lastLatencyMs: 0,
+      lastDataSource: 'Shelly Cloud API',
       currentData: {
-        pvPower: 403.2,
-        pvVoltage: 96.0,
-        pvCurrent: 4.2,
+        pvPower: 0,
+        pvVoltage: 0,
+        pvCurrent: 0,
         energyToday: 0.50,
-        batVoltage: 52.05,
-        batCurrent: 7.5,
-        batSoc: 52,
-        batTemp: 25.5,
-        ctrlTemp: 34.3,
+        batVoltage: 52.0,
+        batCurrent: 0,
+        batSoc: 50,
+        batTemp: 25.0,
+        ctrlTemp: 30.0,
         udiff: 0.03,
         umincell: 3.23,
         umincell_id: 6,
         umaxcell: 3.27,
         umaxcell_id: 3,
-        victronLoad: 136.7,
+        victronLoad: 0,
         victronRelayOn: false,
         victronPermitted: false,
-        gridPower: 146,
-        gridL1: 0.7,
+        gridPower: 0,
+        gridL1: 0.0,
         gridL2: 0.0,
-        gridL3: 0.1,
+        gridL3: 0.0,
         blocked4kw: false,
         blocked9kw: false,
         auxMode: 'IDLE',
         auxPower: 0,
-        forecastWh: 1579,
-        wsLux: 13650,
+        forecastWh: 0,
+        wsLux: 0,
         cells: [3.25, 3.25, 3.27, 3.25, 3.25, 3.23, 3.23, 3.25, 3.26, 3.24, 3.26, 3.25, 3.26, 3.23, 3.25, 3.25]
       }
     };
@@ -735,7 +521,7 @@ moje-fve-app/
       } else {
         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20';
         dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-        badgeText.textContent = text || 'Demo / Simulace';
+        badgeText.textContent = text || 'Ověřuji...';
       }
     }
 
@@ -771,12 +557,12 @@ moje-fve-app/
         else httpEl.className = 'font-mono font-bold text-sm text-slate-400';
       }
 
+      if (latencyEl) {
+        latencyEl.textContent = `${state.lastLatencyMs} ms`;
+      }
+
       if (sourceEl) {
-        let src = state.apiMode === 'cf_function' ? 'Pages Function' : (state.apiMode === 'shelly_direct' ? 'Shelly Direct' : 'Demo');
-        if (state.lastApiResponse && state.lastApiResponse.configSource) {
-          src += ` [${state.lastApiResponse.configSource}]`;
-        }
-        sourceEl.textContent = src;
+        sourceEl.textContent = state.lastDataSource;
       }
 
       if (countEl && state.lastApiResponse) {
@@ -799,66 +585,6 @@ moje-fve-app/
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-    }
-
-    function copyWorkerCode() {
-      const code = document.getElementById('workerCodeBlock').innerText;
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-
-      const btn = document.getElementById('copyBtn');
-      const origText = btn.innerHTML;
-      btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span class="text-emerald-400">Zkopírováno!</span>`;
-      lucide.createIcons();
-      setTimeout(() => { btn.innerHTML = origText; lucide.createIcons(); }, 2000);
-    }
-
-    function initSettingsInputs() {
-      const savedMode = localStorage.getItem('fve_api_mode');
-      const savedServer = localStorage.getItem('fve_shelly_server');
-      const savedKey = localStorage.getItem('fve_shelly_key');
-      const savedIds = localStorage.getItem('fve_shelly_ids');
-
-      if (savedMode) state.apiMode = savedMode;
-      if (savedServer) state.shellyServer = savedServer;
-      if (savedKey) state.shellyKey = savedKey;
-      if (savedIds) state.shellyIds = savedIds;
-
-      document.getElementById('apiModeSelect').value = state.apiMode;
-      document.getElementById('shellyServerUrl').value = state.shellyServer;
-      document.getElementById('shellyAuthKey').value = state.shellyKey;
-      document.getElementById('shellyDeviceIds').value = state.shellyIds;
-
-      updateConfigVisibility();
-      document.getElementById('apiModeSelect').addEventListener('change', updateConfigVisibility);
-    }
-
-    function updateConfigVisibility() {
-      const mode = document.getElementById('apiModeSelect').value;
-      const directGroup = document.getElementById('shellyDirectGroup');
-      const cfGroup = document.getElementById('cfFunctionGroup');
-
-      if (cfGroup) cfGroup.classList.toggle('hidden', mode !== 'cf_function');
-      if (directGroup) directGroup.classList.toggle('hidden', mode !== 'shelly_direct');
-    }
-
-    function saveApiSettings() {
-      state.apiMode = document.getElementById('apiModeSelect').value;
-      state.shellyServer = document.getElementById('shellyServerUrl').value.trim() || 'https://shelly-137-eu.shelly.cloud';
-      state.shellyKey = document.getElementById('shellyAuthKey').value.trim();
-      state.shellyIds = document.getElementById('shellyDeviceIds').value.trim();
-
-      localStorage.setItem('fve_api_mode', state.apiMode);
-      localStorage.setItem('fve_shelly_server', state.shellyServer);
-      localStorage.setItem('fve_shelly_key', state.shellyKey);
-      localStorage.setItem('fve_shelly_ids', state.shellyIds);
-
-      toggleModal('settingsModal');
-      manualFetch();
     }
 
     function initChart() {
@@ -937,7 +663,7 @@ moje-fve-app/
 
       // 4. Grid Guard
       document.getElementById('kpiGridPower').textContent = Math.round(d.gridPower);
-      document.getElementById('kpiGridPhases').textContent = `L1: ${d.gridL1}A • L2: ${d.gridL2}A • L3: ${d.gridL3}A`;
+      document.getElementById('kpiGridPhases').textContent = `L1: ${d.gridL1.toFixed(1)}A • L2: ${d.gridL2.toFixed(1)}A • L3: ${d.gridL3.toFixed(1)}A`;
       document.getElementById('kpiGridLocks').textContent = (d.blocked4kw || d.blocked9kw) ? 'Blokace aktivní' : '4kW/9kW OK';
 
       // Synoptic Flow SVG
@@ -994,109 +720,94 @@ moje-fve-app/
       }
     }
 
+    // Hlavní načítání telemetrie
     async function fetchData() {
       const refreshIcon = document.getElementById('refreshIcon');
-      refreshIcon.classList.add('animate-spin');
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
       const startTime = performance.now();
 
       try {
-        if (state.apiMode === 'cf_function') {
-          await fetchFromPagesFunction();
-        } else if (state.apiMode === 'shelly_direct' && state.shellyKey && state.shellyServer) {
-          await fetchDirectFromShellyCloud();
+        let devices = null;
+        let sourceName = 'Shelly Cloud Live';
+
+        // 1. Primární metoda: Přímé volání Shelly Cloud API /device/all_status (POST, podpora CORS)
+        try {
+          const bodyData = new URLSearchParams();
+          bodyData.append('auth_key', SHELLY_CONFIG.authKey);
+
+          const response = await fetch(`${SHELLY_CONFIG.serverUrl}/device/all_status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: bodyData.toString()
+          });
+
+          if (response.ok) {
+            const json = await response.json();
+            if (json.isok && json.data && json.data.devices_status) {
+              devices = json.data.devices_status;
+              state.lastHttpCode = response.status;
+              state.lastApiResponse = devices;
+              sourceName = 'Shelly Cloud Direct';
+            }
+          }
+        } catch (directErr) {
+          console.warn('Přímé volání Shelly neprošlo, zkouším Cloudflare endpoint:', directErr);
+        }
+
+        // 2. Záložní metoda: pokud direct fetch selže (např. lokální restrikce), zkusíme /api/fve-status
+        if (!devices) {
+          const response = await fetch('/api/fve-status', { cache: 'no-store' });
+          state.lastHttpCode = response.status;
+          if (response.ok) {
+            const json = await response.json();
+            state.lastApiResponse = json;
+            devices = json.devices;
+            sourceName = 'Cloudflare Pages Proxy (/api/fve-status)';
+          }
+        }
+
+        if (devices && Object.keys(devices).length > 0) {
+          state.lastDataSource = sourceName;
+          parseShellyPayload(devices);
+          setConnectionStatus('online', `${sourceName} OK`);
+          hideAlert();
         } else {
-          state.lastHttpCode = 'DEMO';
-          state.lastApiResponse = { notice: 'Režim Demo simulace', currentData: state.currentData };
-          simulateDemoTelemetry();
-          setConnectionStatus('demo', 'Demo Režim');
+          throw new Error('Nepodařilo se načíst data z žádného Shelly API bodu.');
         }
       } catch (err) {
         console.error('FVE Fetch error:', err);
-        setConnectionStatus('error', `Chyba API (${state.lastHttpCode || 'Network'})`);
-        showAlert(`Chyba volání API: ${err.message}. Klikněte na „Diagnostika“ pro zobrazení detailu.`);
-        state.lastApiResponse = { error: err.message, httpStatus: state.lastHttpCode, timestamp: new Date().toISOString() };
+        setConnectionStatus('error', `Chyba API (${state.lastHttpCode || 'Offline'})`);
+        showAlert(`Chyba volání Shelly API: ${err.message}. Zkontrolujte připojení k síti.`);
+        state.lastApiResponse = { error: err.message, timestamp: new Date().toISOString() };
       } finally {
         state.lastLatencyMs = Math.round(performance.now() - startTime);
         updateDiagView();
-        setTimeout(() => refreshIcon.classList.remove('animate-spin'), 400);
+        if (refreshIcon) setTimeout(() => refreshIcon.classList.remove('animate-spin'), 400);
       }
     }
 
-    // Call Cloudflare Pages Function endpoint
-    async function fetchFromPagesFunction() {
-      const response = await fetch('/api/fve-status', { cache: 'no-store' });
-      state.lastHttpCode = response.status;
-
-      let json = null;
-      try {
-        json = await response.json();
-      } catch (e) {
-        const rawText = await response.text();
-        throw new Error(`HTTP ${response.status}: Server nevrátil platný JSON (${rawText.slice(0, 100)})`);
-      }
-
-      state.lastApiResponse = json;
-
-      if (!response.ok) {
-        const errMsg = json?.error || `HTTP ${response.status} ${response.statusText}`;
-        throw new Error(errMsg);
-      }
-
-      if (json && json.devices && Object.keys(json.devices).length > 0) {
-        parseShellyPayload(json.devices);
-        setConnectionStatus('online', 'Shelly Cloud Live');
-      } else {
-        setConnectionStatus('error', 'Žádná zařízení');
-        showAlert('Funkce /api/fve-status vrátila prázdný seznam zařízení. Zkontrolujte SHELLY_DEVICE_IDS v Cloudflare.');
-      }
-    }
-
-    // Direct fetch (for local dev/testing)
-    async function fetchDirectFromShellyCloud() {
-      const devIds = state.shellyIds.split(',').map(s => s.trim()).filter(Boolean);
-      const devices = {};
-      state.lastHttpCode = 200;
-
-      const baseServer = (state.shellyServer || 'https://shelly-137-eu.shelly.cloud').replace(/\/$/, '');
-
-      for (const devId of devIds) {
-        const url = `${baseServer}/device/status?id=${encodeURIComponent(devId)}&auth_key=${encodeURIComponent(state.shellyKey)}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.isok && json.data) {
-            devices[devId] = json.data.device_status;
-          }
-        }
-      }
-
-      state.lastApiResponse = { devices };
-      parseShellyPayload(devices);
-      setConnectionStatus('online', 'Shelly Cloud Direct');
-    }
-
-    // Parse Shelly Cloud device structures
+    // Parsování reálných struktur ze Shelly Cloud pro 5 zařízení
     function parseShellyPayload(devices) {
       if (!devices || typeof devices !== 'object') return;
 
       const detectedRoles = [];
 
-      // Zpracování jednotlivých zařízení ze Shelly cloudu
-      Object.entries(devices).forEach(([devId, dev]) => {
+      Object.entries(devices).forEach(([rawDevId, dev]) => {
         if (!dev || typeof dev !== 'object') return;
+        const devId = String(rawDevId).toLowerCase();
 
-        // Skenování názvů, ID i uživatelských proměnných
-        const name = (dev._name || dev.name || dev.device_name || '').toLowerCase();
-        const devIdLower = String(devId).toLowerCase();
-        const vars = (dev.sys && dev.sys.user_variables) || dev.user_variables || dev.kvs || {};
-        let matchedRole = 'Neznámé / Ostatní';
+        // 1. Grid Guard (3-fázový elektroměr Shelly Pro 3EM na patě domu: 9454c5b957a0)
+        if (devId === '9454c5b957a0' || dev['em:0'] || dev.emeters) {
+          detectedRoles.push({ id: rawDevId, name: 'El-celkove', role: 'Grid Guard (Pro 3EM)' });
 
-        // 1. Grid Guard (3-fázový elektroměr Shelly 3EM / Pro 3EM na vstupu do domu)
-        // Rozpoznání: má emeters pole s fázemi nebo název obsahuje 'grid', 'el-celkove', 'hlavni'
-        if ((dev.emeters && dev.emeters.length >= 2) || name.includes('el-celkove') || name.includes('grid')) {
-          matchedRole = 'Distribuce / Síť (Grid Guard)';
-          let sumP = 0;
-          if (dev.emeters && dev.emeters.length > 0) {
+          if (dev['em:0']) {
+            const em0 = dev['em:0'];
+            state.currentData.gridPower = Number(em0.total_act_power ?? ((em0.a_act_power || 0) + (em0.b_act_power || 0) + (em0.c_act_power || 0)));
+            state.currentData.gridL1 = Number(em0.a_current || 0);
+            state.currentData.gridL2 = Number(em0.b_current || 0);
+            state.currentData.gridL3 = Number(em0.c_current || 0);
+          } else if (dev.emeters) {
+            let sumP = 0;
             dev.emeters.forEach((em, idx) => {
               sumP += (em.power || 0);
               if (idx === 0) state.currentData.gridL1 = Number(em.current || 0);
@@ -1104,77 +815,57 @@ moje-fve-app/
               if (idx === 2) state.currentData.gridL3 = Number(em.current || 0);
             });
             state.currentData.gridPower = sumP;
-          } else if (vars.total_power !== undefined) {
-            state.currentData.gridPower = parseFloat(vars.total_power);
           }
 
-          if (vars.blocked_4kw !== undefined) state.currentData.blocked4kw = String(vars.blocked_4kw) === 'true';
-          if (vars.blocked_9kw !== undefined) state.currentData.blocked9kw = String(vars.blocked_9kw) === 'true';
-        }
-
-        // 2. Solární regulátor EPEver Tracer (výroba z fotovoltaických panelů)
-        // Rozpoznání: klíče pv_power, pv_voltage nebo název 'xtra', 'epever', 'tracer', 'solar'
-        else if (vars.pv_power !== undefined || vars.energy_today !== undefined || name.includes('xtra') || name.includes('epever') || name.includes('tracer')) {
-          matchedRole = 'Panely & Regulátor (EPEver)';
-          if (vars.pv_power !== undefined) state.currentData.pvPower = parseFloat(vars.pv_power);
-          if (vars.pv_voltage !== undefined) state.currentData.pvVoltage = parseFloat(vars.pv_voltage);
-          if (vars.pv_current !== undefined) state.currentData.pvCurrent = parseFloat(vars.pv_current);
-          if (vars.energy_today !== undefined) state.currentData.energyToday = parseFloat(vars.energy_today);
-          if (vars.battery_temp !== undefined) state.currentData.batTemp = parseFloat(vars.battery_temp);
-          if (vars.controller_temp !== undefined) state.currentData.ctrlTemp = parseFloat(vars.controller_temp);
-          if (vars.battery_current !== undefined) state.currentData.batCurrent = parseFloat(vars.battery_current);
-        }
-
-        // 3. BMS Baterie (16s LiFePO4 balanc, články, napětí)
-        // Rozpoznání: klíče cells_csv, umincell, utotal nebo název 'bms', 'solar okruh power'
-        else if (vars.cells_csv !== undefined || vars.umincell !== undefined || vars.utotal !== undefined || name.includes('bms') || name.includes('solar okruh')) {
-          matchedRole = 'Baterie LiFePO4 (BMS)';
-          if (vars.battery_soc !== undefined) state.currentData.batSoc = parseInt(vars.battery_soc, 10);
-          if (vars.soc !== undefined) state.currentData.batSoc = parseInt(vars.soc, 10);
-          if (vars.utotal !== undefined) state.currentData.batVoltage = parseFloat(vars.utotal);
-          if (vars.udiff !== undefined) state.currentData.udiff = parseFloat(vars.udiff);
-          if (vars.umincell !== undefined) state.currentData.umincell = parseFloat(vars.umincell);
-          if (vars.umincell_id !== undefined) state.currentData.umincell_id = parseInt(vars.umincell_id, 10);
-          if (vars.umaxcell !== undefined) state.currentData.umaxcell = parseFloat(vars.umaxcell);
-          if (vars.umaxcell_id !== undefined) state.currentData.umaxcell_id = parseInt(vars.umaxcell_id, 10);
-          if (vars.cells_csv) {
-            const arr = vars.cells_csv.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-            if (arr.length === 16) state.currentData.cells = arr;
+          if (dev['boolean:200']) {
+            state.currentData.blocked4kw = !!dev['boolean:200'].value;
           }
         }
 
-        // 4. Victron měnič / okruh (střídač a přepínání sítě)
-        // Rozpoznání: název 'victron', jednofázové relé/wattmetr
-        else if (name.includes('victron') || (dev.meters && dev.meters[0]) || (dev['switch:0'] && dev['pm:0'])) {
-          matchedRole = 'Victron Okruh (Střídač)';
-          if (dev.meters && dev.meters[0]) {
-            state.currentData.victronLoad = Number(dev.meters[0].power || 0);
-          } else if (dev['pm:0']) {
-            state.currentData.victronLoad = Number(dev['pm:0'].apower || 0);
-          }
-          if (dev.relays && dev.relays[0]) {
-            state.currentData.victronRelayOn = !!dev.relays[0].ison;
-          } else if (dev['switch:0']) {
-            state.currentData.victronRelayOn = !!dev['switch:0'].output;
-          }
-          if (vars.fve_permitted !== undefined) {
-            state.currentData.victronPermitted = String(vars.fve_permitted) === 'true';
+        // 2. Solární regulátor EPEver Tracer přes Shelly Pro 1: 5c013b1e5db4
+        else if (devId === '5c013b1e5db4' || dev['number:207']) {
+          detectedRoles.push({ id: rawDevId, name: 'Xtra-rs485', role: 'Panely & EPEver Tracer' });
+
+          if (dev['number:207']) state.currentData.pvPower = Number(dev['number:207'].value || 0);
+          if (dev['number:206']) state.currentData.pvVoltage = Number(dev['number:206'].value || 0);
+          if (dev['number:205']) state.currentData.pvCurrent = Number(dev['number:205'].value || 0);
+          if (dev['number:201']) state.currentData.batVoltage = Number(dev['number:201'].value || 0);
+          if (dev['number:202']) state.currentData.batCurrent = Number(dev['number:202'].value || 0);
+          if (dev['number:200']) state.currentData.batSoc = Math.round(Number(dev['number:200'].value || 0));
+          if (dev['number:203']) state.currentData.batTemp = Number(dev['number:203'].value || 0);
+          if (dev['number:204']) state.currentData.ctrlTemp = Number(dev['number:204'].value || 0);
+        }
+
+        // 3. Solar okruh power (Pro EM Gen3 / Victron měnič + predikce): e4b32335d7cc
+        else if (devId === 'e4b32335d7cc' || dev['em1:0']) {
+          detectedRoles.push({ id: rawDevId, name: 'Solar okruh power', role: 'Victron Okruh & FVE' });
+
+          if (dev['em1:0']) state.currentData.victronLoad = Number(dev['em1:0'].act_power || 0);
+          if (dev['switch:0']) state.currentData.victronRelayOn = !!dev['switch:0'].output;
+          if (dev['number:200']) state.currentData.forecastWh = Math.round(Number(dev['number:200'].value || 0));
+          if (dev['number:201']) state.currentData.udiff = Number(dev['number:201'].value || 0);
+          if (dev['boolean:201'] !== undefined) state.currentData.victronPermitted = !!dev['boolean:201'].value;
+          else if (dev['boolean:200'] !== undefined) state.currentData.victronPermitted = !!dev['boolean:200'].value;
+        }
+
+        // 4. Pomocné dobíjení (Plus 1PM): b48a0a214a54
+        else if (devId === 'b48a0a214a54' || (dev['switch:0'] && dev['switch:0'].aenergy)) {
+          detectedRoles.push({ id: rawDevId, name: 'Fv dobijeni', role: 'Pomocné dobíjení' });
+
+          if (dev['switch:0']) {
+            state.currentData.auxPower = Number(dev['switch:0'].apower || 0);
+            state.currentData.auxMode = dev['switch:0'].output ? 'AKTIVNÍ' : 'VYPNUTO';
           }
         }
 
-        // 5. Pomocné dobíjení a Meteo stanice
-        else if (name.includes('dobijeni') || vars.ws90_lux !== undefined || vars.forecast_wh !== undefined) {
-          matchedRole = 'Pomocné dobíjení & Meteo';
-          if (vars.ws90_lux !== undefined) state.currentData.wsLux = parseInt(vars.ws90_lux, 10);
-          if (vars.forecast_wh !== undefined) state.currentData.forecastWh = parseInt(vars.forecast_wh, 10);
-          if (vars.charger_power !== undefined) state.currentData.auxPower = parseFloat(vars.charger_power);
-          if (vars.charge_mode !== undefined) state.currentData.auxMode = String(vars.charge_mode);
-        }
+        // 5. Meteostanice WS90: XB211299191617650
+        else if (devId === 'xb211299191617650' || dev['illuminance:0']) {
+          detectedRoles.push({ id: rawDevId, name: 'Meteo-ws90', role: 'Meteostanice WS90' });
 
-        detectedRoles.push({ id: devId, name: dev._name || dev.name || 'Zařízení', role: matchedRole });
+          if (dev['illuminance:0']) state.currentData.wsLux = Math.round(Number(dev['illuminance:0'].lux || 0));
+        }
       });
 
-      // Render diagnostic mapping
       renderDetectedRoles(detectedRoles);
       updateUI(state.currentData);
     }
@@ -1199,21 +890,12 @@ moje-fve-app/
       `).join('');
     }
 
-    // Realistic simulation when API endpoint is not yet configured
-    function simulateDemoTelemetry() {
-      const jitter = (Math.random() - 0.5) * 5;
-      state.currentData.pvPower = Math.max(0, state.currentData.pvPower + jitter);
-      state.currentData.gridPower = Math.max(40, state.currentData.gridPower + (Math.random() - 0.5) * 4);
-      updateUI(state.currentData);
-    }
-
     function manualFetch() {
       fetchData();
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      initSettingsInputs();
       initChart();
       updateUI(state.currentData);
 
