@@ -69,6 +69,18 @@
       </div>
     </div>
 
+    <!-- Tab Navigation (FVE vs Topení) -->
+    <div class="flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-inner">
+      <button id="tabBtnFve" onclick="switchTab('fve')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md">
+        <i data-lucide="sun-medium" class="w-4 h-4"></i>
+        <span>FVE & Baterie</span>
+      </button>
+      <button id="tabBtnHeating" onclick="switchTab('heating')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition">
+        <i data-lucide="flame" class="w-4 h-4 text-orange-400"></i>
+        <span>Kotelna & Vytápění</span>
+      </button>
+    </div>
+
     <!-- Right Controls: Auto-refresh, Last Update, Diagnostics -->
     <div class="flex items-center gap-2">
       <div class="text-right hidden sm:block mr-2">
@@ -101,8 +113,11 @@
 
   <main class="flex-1 overflow-y-auto px-4 sm:px-6 py-6 max-w-7xl w-full mx-auto space-y-6">
 
-    <!-- KPI Summary Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 1. FVE & Baterie Záložka -->
+    <div id="viewFve" class="space-y-6">
+
+      <!-- KPI Summary Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       
       <!-- PV Production -->
       <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
@@ -363,7 +378,357 @@
       </div>
     </div>
 
+    </div> <!-- /viewFve -->
+
+    <!-- 2. Kotelna & Vytápění Záložka -->
+    <div id="viewHeating" class="space-y-6 hidden">
+
+      <!-- Heating KPI Summary Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- 1. Kotel na tuhá paliva / zdroj -->
+        <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-medium uppercase tracking-wider">Kotel (Zdroj tepla)</span>
+            <div class="p-1.5 rounded-lg bg-orange-500/10 text-orange-400"><i data-lucide="flame" class="w-4 h-4"></i></div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiBoilerTemp">0.0</span>
+            <span class="text-sm font-semibold text-orange-400">°C</span>
+            <span class="text-xs px-2 py-0.5 rounded font-bold ml-auto bg-slate-800 text-slate-400" id="kpiBoilerBadge">VYHASNUTO</span>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <span>Čidlo: <strong class="text-slate-200">ec62608862a4</strong></span>
+            <span>Čerpadlo: <strong class="text-emerald-400" id="kpiBoilerPump">AUTO</strong></span>
+          </div>
+        </div>
+
+        <!-- 2. Akumulační nádrž (AKU) -->
+        <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-medium uppercase tracking-wider">Akumulační nádrž (AKU)</span>
+            <div class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400"><i data-lucide="waves" class="w-4 h-4"></i></div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiAkuTopTemp">0.0</span>
+            <span class="text-sm font-semibold text-cyan-400">°C</span>
+            <span class="text-xs text-slate-400 ml-1">(vrch)</span>
+            <span class="text-xs font-mono font-bold text-cyan-300 ml-auto" id="kpiAkuPercent">0% nabito</span>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <span id="kpiAkuLayers">AKU1P: <strong class="text-slate-200">ec626091f9a4</strong></span>
+            <span>Profil: <strong class="text-cyan-300" id="kpiAkuAvg">Vrstvení OK</strong></span>
+          </div>
+        </div>
+
+        <!-- 3. Směšovací ventil (Topná větev) -->
+        <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-medium uppercase tracking-wider">Směšovací ventil</span>
+            <div class="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><i data-lucide="git-commit" class="w-4 h-4"></i></div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiMixPosition">45</span>
+            <span class="text-sm font-semibold text-purple-400">%</span>
+            <span class="text-xs px-2 py-0.5 rounded font-bold ml-auto bg-purple-500/20 text-purple-300" id="kpiMixMode">REGULACE</span>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <span>Náběh: <strong class="text-purple-300" id="kpiMixSupply">42.0 °C</strong></span>
+            <span>Vratka: <strong class="text-slate-300" id="kpiMixReturn">34.0 °C</strong></span>
+          </div>
+        </div>
+
+        <!-- 4. Elektrické patrony v AKU (Shelly Pro 3) -->
+        <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition"></div>
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-medium uppercase tracking-wider">El. patrony v AKU</span>
+            <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><i data-lucide="zap" class="w-4 h-4"></i></div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiPatronyPower">0.0</span>
+            <span class="text-sm font-semibold text-amber-400">kW</span>
+            <span class="text-xs font-mono text-slate-400 ml-auto" id="kpiPatronyPro3Id">ece334e968a8</span>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <span>4kW: <strong id="kpiPatrona4kwBadge" class="text-slate-400">OFF</strong></span>
+            <span>7.5kW: <strong id="kpiPatrona7kwBadge" class="text-slate-400">OFF</strong></span>
+            <span>Spolu: <strong class="text-amber-300" id="kpiPatronySum">0 kW</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Heating Flow Synoptic & Control Center -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Synoptic Heat Flow SVG -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 lg:col-span-2 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <i data-lucide="network" class="w-4 h-4 text-orange-400"></i>
+              Schéma hydraulického toku tepla
+            </h2>
+            <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 font-mono text-slate-300">
+              Zdroj tepla: <strong class="text-orange-400" id="flowHeatSource">KOTEL + AKU</strong>
+            </span>
+          </div>
+
+          <!-- SVG Diagram -->
+          <div class="w-full bg-slate-900/60 rounded-xl p-4 border border-slate-800/60 relative flex items-center justify-center min-h-[260px]">
+            <svg viewBox="0 0 680 260" class="w-full max-w-3xl h-auto drop-shadow-md">
+              <defs>
+                <linearGradient id="akuGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.9"/>
+                  <stop offset="50%" stop-color="#eab308" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#0284c7" stop-opacity="0.9"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Pipe Lines -->
+              <!-- Kotel to AKU top -->
+              <path d="M 120 75 L 260 75" stroke="#f97316" stroke-width="4" stroke-dasharray="6 4" class="flow-dot"/>
+              <!-- AKU bottom to Kotel return -->
+              <path d="M 260 195 L 120 195" stroke="#0284c7" stroke-width="3" stroke-dasharray="6 4" class="flow-dot"/>
+              
+              <!-- AKU top to Mixer -->
+              <path d="M 380 75 L 480 75" stroke="#f97316" stroke-width="4" stroke-dasharray="6 4" class="flow-dot"/>
+              <!-- Mixer to House -->
+              <path d="M 540 75 L 590 75" stroke="#c084fc" stroke-width="4" stroke-dasharray="6 4" class="flow-dot"/>
+              <!-- House return to AKU bottom -->
+              <path d="M 590 195 L 380 195" stroke="#0284c7" stroke-width="3" stroke-dasharray="6 4" class="flow-dot"/>
+              <!-- Mixer bypass vertical -->
+              <path d="M 510 195 L 510 105" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 4"/>
+
+              <!-- Patrony into AKU side -->
+              <path d="M 320 25 L 320 50" stroke="#facc15" stroke-width="3" stroke-dasharray="4 3" class="flow-dot"/>
+
+              <!-- Node 1: Kotel -->
+              <g transform="translate(20, 45)">
+                <rect width="100" height="170" rx="14" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+                <text x="50" y="28" text-anchor="middle" fill="#fb923c" font-size="12" font-weight="bold">🔥 KOTEL</text>
+                <text x="50" y="58" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="800" id="flowBoilerTemp">0.0 °C</text>
+                <rect x="15" y="78" width="70" height="22" rx="6" fill="#0f172a"/>
+                <text x="50" y="93" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="bold" id="flowBoilerState">VYHASNUTO</text>
+                <text x="50" y="130" text-anchor="middle" fill="#cbd5e1" font-size="9">DS18B20:100</text>
+                <text x="50" y="150" text-anchor="middle" fill="#64748b" font-size="9">192.168.100.74</text>
+              </g>
+
+              <!-- Node 2: AKU nádrž -->
+              <g transform="translate(260, 45)">
+                <rect width="120" height="170" rx="16" fill="#0f172a" stroke="#06b6d4" stroke-width="2"/>
+                <!-- Thermal gradient bar inside AKU -->
+                <rect x="10" y="10" width="10" height="150" rx="5" fill="url(#akuGradient)"/>
+                
+                <text x="65" y="25" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="bold">AKU NÁDRŽ</text>
+                
+                <!-- Top Temp -->
+                <text x="30" y="55" fill="#f87171" font-size="10" font-weight="bold">Vrch:</text>
+                <text x="105" y="55" text-anchor="end" fill="#ffffff" font-size="13" font-weight="bold" id="flowAkuTop">0.0 °C</text>
+                
+                <!-- Mid Temp -->
+                <text x="30" y="95" fill="#facc15" font-size="10" font-weight="bold">Střed:</text>
+                <text x="105" y="95" text-anchor="end" fill="#ffffff" font-size="12" font-weight="bold" id="flowAkuMid">--.- °C</text>
+                
+                <!-- Bottom Temp -->
+                <text x="30" y="135" fill="#38bdf8" font-size="10" font-weight="bold">Spod:</text>
+                <text x="105" y="135" text-anchor="end" fill="#ffffff" font-size="12" font-weight="bold" id="flowAkuBottom">--.- °C</text>
+                
+                <text x="65" y="158" text-anchor="middle" fill="#64748b" font-size="9">AKU1P (101)</text>
+              </g>
+
+              <!-- Node 3: El. patrony Block above AKU -->
+              <g transform="translate(260, 5)">
+                <rect width="120" height="30" rx="8" fill="#1e293b" stroke="#facc15" stroke-width="1.5"/>
+                <text x="60" y="19" text-anchor="middle" fill="#facc15" font-size="10" font-weight="bold" id="flowPatronyText">⚡ PATRONY: 0 kW</text>
+              </g>
+
+              <!-- Node 4: Směšovací ventil -->
+              <g transform="translate(460, 50)">
+                <rect width="80" height="70" rx="12" fill="#1e293b" stroke="#c084fc" stroke-width="2"/>
+                <text x="40" y="24" text-anchor="middle" fill="#e9d5ff" font-size="10" font-weight="bold">SMĚŠOVAČ</text>
+                <text x="40" y="46" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="800" id="flowMixPos">45%</text>
+                <text x="40" y="60" text-anchor="middle" fill="#c084fc" font-size="9">SERVOVENTIL</text>
+              </g>
+
+              <!-- Node 5: Otopná soustava / Dům -->
+              <g transform="translate(580, 45)">
+                <rect width="90" height="170" rx="14" fill="#1e293b" stroke="#818cf8" stroke-width="2"/>
+                <text x="45" y="28" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">🏠 TOPNÝ</text>
+                <text x="45" y="44" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">OKRUH</text>
+                
+                <text x="45" y="80" text-anchor="middle" fill="#c084fc" font-size="9">NÁBĚH</text>
+                <text x="45" y="98" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold" id="flowSupplyTemp">42.0 °C</text>
+                
+                <text x="45" y="130" text-anchor="middle" fill="#38bdf8" font-size="9">VRATKA</text>
+                <text x="45" y="148" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold" id="flowReturnTemp">34.0 °C</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-800 text-xs">
+            <div>
+              <span class="text-slate-400 block">Výkon patron celkem:</span>
+              <span class="font-bold text-amber-300" id="txtPatronyWatts">0 W</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Stav patrony 4 kW:</span>
+              <span class="font-bold text-slate-200" id="txtPatrona4kwDetail">VYPNUTO</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Stav patrony 7.5 kW:</span>
+              <span class="font-bold text-slate-200" id="txtPatrona7kwDetail">VYPNUTO</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Slot směšovacího ventilu:</span>
+              <span class="font-bold text-purple-300" id="txtMixSlotStatus">Připraveno (Shelly)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heating Management & Slot Configuration -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="sliders-horizontal" class="w-4 h-4 text-cyan-400"></i>
+              Konfigurace & Vazby zařízení
+            </h2>
+
+            <div class="space-y-3">
+              <!-- Kotel slot -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">Kotel čidlo</div>
+                  <div class="text-[11px] text-slate-400 font-mono">ec62608862a4 (temp:100)</div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-orange-500/20 text-orange-400" id="cfgKotelVal">0.0 °C</span>
+              </div>
+
+              <!-- AKU1P slot -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">AKU nádrž (Vrch)</div>
+                  <div class="text-[11px] text-slate-400 font-mono">ec626091f9a4 (temp:101)</div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/20 text-cyan-400" id="cfgAkuVal">0.0 °C</span>
+              </div>
+
+              <!-- Patrony Pro 3 slot -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">El. patrony (Shelly Pro 3)</div>
+                  <div class="text-[11px] text-slate-400 font-mono">ece334e968a8 (kanály 1 & 2)</div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400" id="cfgPatronyVal">OFF</span>
+              </div>
+
+              <!-- Směšovací ventil slot -->
+              <div class="p-3 rounded-xl bg-slate-900/90 border border-purple-500/30 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white flex items-center gap-1.5">
+                    Směšovací ventil (Slot)
+                    <span class="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 text-[10px]">Připraveno</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 font-mono" id="cfgMixSlotId">ID: čeká na zadání (např. 2PM)</div>
+                </div>
+                <button onclick="toggleModal('slotConfigModal')" class="px-2 py-1 rounded text-xs font-semibold bg-purple-600 hover:bg-purple-500 text-white transition">Nastavit</button>
+              </div>
+
+              <!-- Grid Guard vazba -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">Blokace patron z GRIDu</div>
+                  <div class="text-[11px] text-slate-400">Při překročení 4kW/9kW příkonu</div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400" id="cfgHeatingLock">BEZ BLOKACE</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Automatické řízení dle přebytků FVE</span>
+            <span class="text-amber-400 font-medium">Aktivní</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Heating Activity Telemetry Table -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-orange-400"></i>
+            Historie čtení vytápění & kotelny
+          </h2>
+          <div class="text-[11px] text-slate-400 flex items-center gap-3">
+            <span>Perioda čtení: <strong class="text-slate-200">15s</strong></span>
+            <span class="text-orange-400 font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
+              Shelly Kotelna Live
+            </span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-[11px] text-slate-400 uppercase border-b border-slate-800">
+              <tr>
+                <th class="py-2.5 px-3">Čas</th>
+                <th class="py-2.5 px-3">Kotel (°C)</th>
+                <th class="py-2.5 px-3">AKU nahoře (°C)</th>
+                <th class="py-2.5 px-3">Směšovač (%)</th>
+                <th class="py-2.5 px-3">Topná větev (°C)</th>
+                <th class="py-2.5 px-3">Patrona 4 kW</th>
+                <th class="py-2.5 px-3">Patrona 7.5 kW</th>
+                <th class="py-2.5 px-3">Celkem elektro (kW)</th>
+              </tr>
+            </thead>
+            <tbody id="heatingLogsTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+              <!-- Dynamicky doplňováno -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div> <!-- /viewHeating -->
+
   </main>
+
+  <!-- Modal for Slot Configuration -->
+  <div id="slotConfigModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-purple-400"></i>
+          Konfigurace slotů pro vytápění
+        </h3>
+        <button onclick="toggleModal('slotConfigModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="space-y-4 text-xs">
+        <p class="text-slate-400">Zde můžete zadat Shelly ID zařízení pro směšovací ventil a doplňková teplotní čidla. Hodnoty se uloží do paměti prohlížeče:</p>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">ID zařízení pro směšovací ventil (např. Plus 2PM):</label>
+          <input type="text" id="inputMixValveId" placeholder="např. a0dd6c9ee06c" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">ID čidla středu AKU (volitelné):</label>
+          <input type="text" id="inputAkuMidId" placeholder="např. ec626091f9a4_102" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">ID čidla spodku AKU (volitelné):</label>
+          <input type="text" id="inputAkuBottomId" placeholder="např. ec626091f9a4_103" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="toggleModal('slotConfigModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">Zrušit</button>
+        <button onclick="saveHeatingSlots()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold">Uložit nastavení</button>
+      </div>
+    </div>
+  </div>
 
   <div id="diagModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
@@ -456,11 +821,20 @@
         '5c013b1e5db4',      // Xtra-rs485 (EPEver solární regulátor / Pro 1)
         'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / BMS & predikce)
         'b48a0a214a54',      // Fv dobijeni (Plus 1PM)
-        'XB211299191617650'  // Meteostanice WS90
-      ]
+        'XB211299191617650', // Meteostanice WS90
+        'ec62608862a4',      // Kotel (teplota kotle Add-on)
+        'ec626091f9a4',      // AKU1P (teplota AKU Add-on)
+        'ece334e968a8'       // El-patrony-Pro3 (4kW & 7.5kW)
+      ],
+      heatingSlots: {
+        mixValveId: localStorage.getItem('cfgMixValveId') || '',
+        akuMidId: localStorage.getItem('cfgAkuMidId') || '',
+        akuBottomId: localStorage.getItem('cfgAkuBottomId') || ''
+      }
     };
 
     const state = {
+      activeTab: 'fve',
       refreshInterval: 15000,
       timerId: null,
       lastApiResponse: null,
@@ -505,7 +879,22 @@
         auxMode: 'IDLE',
         auxPower: 0,
         forecastWh: 0,
-        wsLux: 0
+        wsLux: 0,
+        // Kotelna & Vytápění
+        boilerTemp: 0.0,
+        boilerStatus: 'VYHASNUTO',
+        boilerPumpOn: false,
+        akuTopTemp: 0.0,
+        akuMidTemp: 0.0,
+        akuBottomTemp: 0.0,
+        akuChargePercent: 0,
+        mixValvePosition: 45,
+        mixValveStatus: 'REGULACE',
+        mixSupplyTemp: 42.0,
+        mixReturnTemp: 34.0,
+        patrona4kwOn: false,
+        patrona7kwOn: false,
+        patronyTotalPower: 0
       }
     };
 
@@ -670,6 +1059,65 @@
         bmsCell.textContent = `ΔU: ${d.udiff.toFixed(3)} V (odchylka)`;
       }
 
+      // Vytápění & Kotelna telemetrie
+      const elBoiler = document.getElementById('kpiBoilerTemp');
+      if (elBoiler) {
+        elBoiler.textContent = d.boilerTemp.toFixed(1);
+        const bBadge = document.getElementById('kpiBoilerBadge');
+        if (bBadge) {
+          bBadge.textContent = d.boilerStatus;
+          bBadge.className = d.boilerStatus === 'VÝKON' ? 'text-xs px-2 py-0.5 rounded font-bold ml-auto bg-orange-500/20 text-orange-400' :
+                             (d.boilerStatus === 'DOCHOV' ? 'text-xs px-2 py-0.5 rounded font-bold ml-auto bg-amber-500/20 text-amber-300' :
+                             'text-xs px-2 py-0.5 rounded font-bold ml-auto bg-slate-800 text-slate-400');
+        }
+        document.getElementById('kpiBoilerPump').textContent = d.boilerPumpOn ? 'BĚŽÍ' : 'VYPNUTO';
+        document.getElementById('flowBoilerTemp').textContent = `${d.boilerTemp.toFixed(1)} °C`;
+        document.getElementById('flowBoilerState').textContent = d.boilerStatus;
+        document.getElementById('cfgKotelVal').textContent = `${d.boilerTemp.toFixed(1)} °C`;
+
+        document.getElementById('kpiAkuTopTemp').textContent = d.akuTopTemp.toFixed(1);
+        document.getElementById('kpiAkuPercent').textContent = `${d.akuChargePercent}% nabito`;
+        document.getElementById('flowAkuTop').textContent = `${d.akuTopTemp.toFixed(1)} °C`;
+        document.getElementById('flowAkuMid').textContent = d.akuMidTemp > 0 ? `${d.akuMidTemp.toFixed(1)} °C` : '--.- °C';
+        document.getElementById('flowAkuBottom').textContent = d.akuBottomTemp > 0 ? `${d.akuBottomTemp.toFixed(1)} °C` : '--.- °C';
+        document.getElementById('cfgAkuVal').textContent = `${d.akuTopTemp.toFixed(1)} °C`;
+
+        document.getElementById('kpiMixPosition').textContent = Math.round(d.mixValvePosition);
+        document.getElementById('kpiMixMode').textContent = d.mixValveStatus;
+        document.getElementById('kpiMixSupply').textContent = `${d.mixSupplyTemp.toFixed(1)} °C`;
+        document.getElementById('kpiMixReturn').textContent = `${d.mixReturnTemp.toFixed(1)} °C`;
+        document.getElementById('flowMixPos').textContent = `${Math.round(d.mixValvePosition)}%`;
+        document.getElementById('flowSupplyTemp').textContent = `${d.mixSupplyTemp.toFixed(1)} °C`;
+        document.getElementById('flowReturnTemp').textContent = `${d.mixReturnTemp.toFixed(1)} °C`;
+
+        const kwSum = (d.patronyTotalPower / 1000).toFixed(1);
+        document.getElementById('kpiPatronyPower').textContent = kwSum;
+        document.getElementById('kpiPatronySum').textContent = `${kwSum} kW`;
+        const p4 = document.getElementById('kpiPatrona4kwBadge');
+        if (p4) {
+          p4.textContent = d.patrona4kwOn ? 'ON (4kW)' : 'OFF';
+          p4.className = d.patrona4kwOn ? 'text-amber-400 font-bold' : 'text-slate-400';
+        }
+        const p7 = document.getElementById('kpiPatrona7kwBadge');
+        if (p7) {
+          p7.textContent = d.patrona7kwOn ? 'ON (7.5kW)' : 'OFF';
+          p7.className = d.patrona7kwOn ? 'text-amber-400 font-bold' : 'text-slate-400';
+        }
+        document.getElementById('flowPatronyText').textContent = `⚡ PATRONY: ${kwSum} kW`;
+        document.getElementById('txtPatronyWatts').textContent = `${d.patronyTotalPower} W`;
+        document.getElementById('txtPatrona4kwDetail').textContent = d.patrona4kwOn ? 'AKTIVNÍ (4 kW)' : 'VYPNUTO';
+        document.getElementById('txtPatrona7kwDetail').textContent = d.patrona7kwOn ? 'AKTIVNÍ (7.5 kW)' : 'VYPNUTO';
+        document.getElementById('cfgPatronyVal').textContent = d.patronyTotalPower > 0 ? `${kwSum} kW` : 'OFF';
+        
+        const lockEl = document.getElementById('cfgHeatingLock');
+        if (lockEl) {
+          lockEl.textContent = (d.blocked4kw || d.blocked9kw) ? 'BLOKACE GRID' : 'BEZ BLOKACE';
+          lockEl.className = (d.blocked4kw || d.blocked9kw) ? 'px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400' : 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400';
+        }
+
+        appendHeatingLogRecord(d);
+      }
+
       appendLogRecord(d, totalHouseConsumption);
 
       const now = new Date();
@@ -689,6 +1137,28 @@
         <td class="py-2.5 px-3 text-sky-400 font-semibold">${Math.round(d.gridPower)} W</td>
         <td class="py-2.5 px-3 text-purple-300 font-semibold">${Math.round(totalHouse)} W</td>
         <td class="py-2.5 px-3 text-emerald-400 font-semibold">${d.batSoc}% <span class="text-slate-400 font-normal text-[11px]">(${d.batVoltage.toFixed(1)}V)</span></td>
+      `;
+      tbody.prepend(tr);
+      while (tbody.children.length > 8) {
+        tbody.removeChild(tbody.lastChild);
+      }
+    }
+
+    function appendHeatingLogRecord(d) {
+      const tbody = document.getElementById('heatingLogsTableBody');
+      if (!tbody) return;
+      const time = new Date().toLocaleTimeString('cs-CZ');
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-800/40 transition';
+      tr.innerHTML = `
+        <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap">${time}</td>
+        <td class="py-2.5 px-3 text-orange-400 font-semibold">${d.boilerTemp.toFixed(1)} °C</td>
+        <td class="py-2.5 px-3 text-cyan-400 font-semibold">${d.akuTopTemp.toFixed(1)} °C</td>
+        <td class="py-2.5 px-3 text-purple-300 font-semibold">${Math.round(d.mixValvePosition)}%</td>
+        <td class="py-2.5 px-3 text-slate-200">${d.mixSupplyTemp.toFixed(1)} °C</td>
+        <td class="py-2.5 px-3 ${d.patrona4kwOn ? 'text-amber-400 font-bold' : 'text-slate-400'}">${d.patrona4kwOn ? 'ON' : 'OFF'}</td>
+        <td class="py-2.5 px-3 ${d.patrona7kwOn ? 'text-amber-400 font-bold' : 'text-slate-400'}">${d.patrona7kwOn ? 'ON' : 'OFF'}</td>
+        <td class="py-2.5 px-3 text-amber-300 font-semibold">${(d.patronyTotalPower / 1000).toFixed(1)} kW</td>
       `;
       tbody.prepend(tr);
       while (tbody.children.length > 8) {
@@ -910,6 +1380,72 @@
 
           if (dev['illuminance:0']) state.currentData.wsLux = Math.round(Number(dev['illuminance:0'].lux || 0));
         }
+
+        // 8. Kotel teplota: ec62608862a4 (Plus Add-on čidlo Kotel)
+        else if (devId === 'ec62608862a4') {
+          detectedRoles.push({ id: rawDevId, name: 'Kotel', role: 'Kotel teplota (DS18B20:100)' });
+          let t = null;
+          if (dev['temperature:100'] && dev['temperature:100'].tC !== undefined) t = dev['temperature:100'].tC;
+          else if (dev['temperature:0'] && dev['temperature:0'].tC !== undefined) t = dev['temperature:0'].tC;
+          else if (dev.temperature !== undefined) t = dev.temperature;
+
+          if (t !== null) {
+            state.currentData.boilerTemp = Number(t);
+            if (state.currentData.boilerTemp >= 60) state.currentData.boilerStatus = 'VÝKON';
+            else if (state.currentData.boilerTemp >= 45) state.currentData.boilerStatus = 'DOCHOV';
+            else state.currentData.boilerStatus = 'VYHASNUTO';
+          }
+          if (dev['switch:0']) {
+            state.currentData.boilerPumpOn = !!dev['switch:0'].output;
+          }
+        }
+
+        // 9. AKU nádrž teplota (AKU1P): ec626091f9a4
+        else if (devId === 'ec626091f9a4') {
+          detectedRoles.push({ id: rawDevId, name: 'AKU1P', role: 'AKU nádrž teplota (DS18B20:101)' });
+          let t101 = null;
+          if (dev['temperature:101'] && dev['temperature:101'].tC !== undefined) t101 = dev['temperature:101'].tC;
+          else if (dev['temperature:100'] && dev['temperature:100'].tC !== undefined) t101 = dev['temperature:100'].tC;
+          else if (dev['temperature:0'] && dev['temperature:0'].tC !== undefined) t101 = dev['temperature:0'].tC;
+
+          if (t101 !== null) {
+            state.currentData.akuTopTemp = Number(t101);
+            state.currentData.akuChargePercent = Math.min(100, Math.max(0, Math.round(((state.currentData.akuTopTemp - 25) / (85 - 25)) * 100)));
+          }
+          if (dev['temperature:102'] && dev['temperature:102'].tC !== undefined) {
+            state.currentData.akuMidTemp = Number(dev['temperature:102'].tC);
+          }
+          if (dev['temperature:103'] && dev['temperature:103'].tC !== undefined) {
+            state.currentData.akuBottomTemp = Number(dev['temperature:103'].tC);
+          }
+        }
+
+        // 10. Elektrické patrony v AKU: ece334e968a8 (Shelly Pro 3)
+        else if (devId === 'ece334e968a8') {
+          detectedRoles.push({ id: rawDevId, name: 'El-patrony', role: 'El. patrony v AKU (Pro 3: 4kW & 7.5kW)' });
+          if (dev['switch:1']) {
+            state.currentData.patrona4kwOn = !!dev['switch:1'].output;
+          }
+          if (dev['switch:2']) {
+            state.currentData.patrona7kwOn = !!dev['switch:2'].output;
+          }
+          state.currentData.patronyTotalPower = (state.currentData.patrona4kwOn ? 4000 : 0) + (state.currentData.patrona7kwOn ? 7500 : 0);
+        }
+
+        // 11. Směšovací ventil (konfigurovaný slot)
+        else if (SHELLY_CONFIG.heatingSlots.mixValveId && devId === SHELLY_CONFIG.heatingSlots.mixValveId.toLowerCase()) {
+          detectedRoles.push({ id: rawDevId, name: 'Smesovac', role: 'Směšovací ventil (Servopohon)' });
+          if (dev['cover:0']) {
+            state.currentData.mixValvePosition = Number(dev['cover:0'].current_pos || 0);
+            state.currentData.mixValveStatus = dev['cover:0'].state ? dev['cover:0'].state.toUpperCase() : 'POLOHA';
+          } else if (dev['switch:0']) {
+            state.currentData.mixValvePosition = dev['switch:0'].output ? 100 : 0;
+            state.currentData.mixValveStatus = dev['switch:0'].output ? 'OTEVŘENO' : 'ZAVŘENO';
+          }
+          if (dev['temperature:100'] && dev['temperature:100'].tC !== undefined) {
+            state.currentData.mixSupplyTemp = Number(dev['temperature:100'].tC);
+          }
+        }
       });
 
       // Spočítáme celkovou zátěž ze střídačů Victron (VE500 + VE2000)
@@ -944,9 +1480,81 @@
       fetchData();
     }
 
+    // Přepínání záložek: FVE vs Topení
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const vFve = document.getElementById('viewFve');
+      const vHeat = document.getElementById('viewHeating');
+      const bFve = document.getElementById('tabBtnFve');
+      const bHeat = document.getElementById('tabBtnHeating');
+
+      if (tab === 'heating') {
+        if (vFve) vFve.classList.add('hidden');
+        if (vHeat) vHeat.classList.remove('hidden');
+
+        if (bHeat) bHeat.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md';
+        if (bFve) bFve.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition';
+      } else {
+        if (vHeat) vHeat.classList.add('hidden');
+        if (vFve) vFve.classList.remove('hidden');
+
+        if (bFve) bFve.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md';
+        if (bHeat) bHeat.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition';
+      }
+      lucide.createIcons();
+    }
+
+    // Uložení slotů pro vytápění do localStorage
+    function saveHeatingSlots() {
+      const mixId = (document.getElementById('inputMixValveId').value || '').trim();
+      const midId = (document.getElementById('inputAkuMidId').value || '').trim();
+      const botId = (document.getElementById('inputAkuBottomId').value || '').trim();
+
+      localStorage.setItem('cfgMixValveId', mixId);
+      localStorage.setItem('cfgAkuMidId', midId);
+      localStorage.setItem('cfgAkuBottomId', botId);
+
+      SHELLY_CONFIG.heatingSlots.mixValveId = mixId;
+      SHELLY_CONFIG.heatingSlots.akuMidId = midId;
+      SHELLY_CONFIG.heatingSlots.akuBottomId = botId;
+
+      if (mixId && !SHELLY_CONFIG.deviceIds.includes(mixId)) {
+        SHELLY_CONFIG.deviceIds.push(mixId);
+      }
+
+      const cfgSlotText = document.getElementById('cfgMixSlotId');
+      if (cfgSlotText) cfgSlotText.textContent = mixId ? `ID: ${mixId}` : 'ID: čeká na zadání (např. 2PM)';
+      const slotTxt = document.getElementById('txtMixSlotStatus');
+      if (slotTxt) slotTxt.textContent = mixId ? `Nastaveno (${mixId})` : 'Připraveno (Shelly)';
+
+      toggleModal('slotConfigModal');
+      fetchData();
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      // Načtení uložených slotů do formuláře
+      const mixId = localStorage.getItem('cfgMixValveId') || '';
+      const midId = localStorage.getItem('cfgAkuMidId') || '';
+      const botId = localStorage.getItem('cfgAkuBottomId') || '';
+
+      const inMix = document.getElementById('inputMixValveId');
+      if (inMix) inMix.value = mixId;
+      const inMid = document.getElementById('inputAkuMidId');
+      if (inMid) inMid.value = midId;
+      const inBot = document.getElementById('inputAkuBottomId');
+      if (inBot) inBot.value = botId;
+
+      if (mixId) {
+        const cfgSlotText = document.getElementById('cfgMixSlotId');
+        if (cfgSlotText) cfgSlotText.textContent = `ID: ${mixId}`;
+        const slotTxt = document.getElementById('txtMixSlotStatus');
+        if (slotTxt) slotTxt.textContent = `Nastaveno (${mixId})`;
+        if (!SHELLY_CONFIG.deviceIds.includes(mixId)) SHELLY_CONFIG.deviceIds.push(mixId);
+      }
+
       lucide.createIcons();
       updateUI(state.currentData);
+      switchTab('fve');
 
       fetchData();
       state.timerId = setInterval(fetchData, state.refreshInterval);

@@ -8,7 +8,10 @@ const FALLBACK_DEVICE_IDS = [
   '5c013b1e5db4',      // Xtra-rs485 (EPEver solární regulátor)
   'e4b32335d7cc',      // Solar okruh power (Pro EM Gen3 / BMS & predikce)
   'b48a0a214a54',      // Fv dobijeni (Plus 1PM)
-  'XB211299191617650'  // Meteostanice WS90
+  'XB211299191617650', // Meteostanice WS90
+  'ec62608862a4',      // Kotel (teplota kotle)
+  'ec626091f9a4',      // AKU1P (teplota AKU)
+  'ece334e968a8'       // El-patrony-Pro3 (4kW a 7.5kW patrony)
 ];
 
 /**

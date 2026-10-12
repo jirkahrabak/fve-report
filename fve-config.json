@@ -51,6 +51,27 @@
       "name": "Meteo-ws90",
       "model": "SBWS-90CM",
       "role": "Meteostanice WS90 (lux / osvětlení)"
+    },
+    {
+      "id": "ec62608862a4",
+      "name": "Kotel",
+      "model": "PlusAddOn",
+      "ip": "192.168.100.74",
+      "role": "Teplota Kotel (čidlo temperature:100)"
+    },
+    {
+      "id": "ec626091f9a4",
+      "name": "AKU1P",
+      "model": "PlusAddOn",
+      "ip": "192.168.100.31",
+      "role": "Teplota AKU nádrže (čidlo temperature:101)"
+    },
+    {
+      "id": "ece334e968a8",
+      "name": "El-patrony-Pro3",
+      "model": "Pro3",
+      "ip": "192.168.100.32",
+      "role": "Elektrické patrony v AKU (Relé 1: 4kW, Relé 2: 7.5kW)"
     }
   ]
 }
