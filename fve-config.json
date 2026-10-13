@@ -72,6 +72,41 @@
       "model": "Pro3",
       "ip": "192.168.100.32",
       "role": "Shelly Pro 3 (Relé 0: Čerpadlo okruhu, Relé 1: 4kW patrona, Relé 2: 7.5kW patrona)"
+    },
+    {
+      "id": "28372f368644",
+      "name": "AKU topeni",
+      "model": "Shelly 3EM-63 Gen3",
+      "ip": "192.168.100.75",
+      "role": "Ohřev AKU nádrže - 3-fázový elektroměr patron (měření příkonu a spotřeby energie)"
+    },
+    {
+      "id": "dcda0ce06e8c",
+      "name": "Eliška-podlaha",
+      "model": "Shelly 1PM Gen3",
+      "ip": "192.168.100.213",
+      "role": "Podlahové topení - Pokoj Eliška (spínání a měření příkonu)"
+    },
+    {
+      "id": "1c692028dd98",
+      "name": "Koupelna-podlaha",
+      "model": "Shelly Plus 1PM",
+      "ip": "192.168.100.61",
+      "role": "Podlahové topení - Koupelna (spínání a měření příkonu)"
+    },
+    {
+      "id": "8813bfd9d6a4",
+      "name": "Ložnice podlaha",
+      "model": "Shelly Pro 1PM",
+      "ip": "192.168.100.76",
+      "role": "Podlahové topení - Ložnice (spínání a měření příkonu)"
+    },
+    {
+      "id": "cc8da263a07c",
+      "name": "Obyvakpodlaha",
+      "model": "Shelly 1PM Gen3",
+      "ip": "192.168.100.222",
+      "role": "Podlahové topení - Obývací pokoj (spínání a měření příkonu)"
     }
   ]
 }

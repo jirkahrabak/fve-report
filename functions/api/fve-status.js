@@ -11,7 +11,12 @@ const FALLBACK_DEVICE_IDS = [
   'XB211299191617650', // Meteostanice WS90
   'ec62608862a4',      // Kotel (teplota kotle & komína)
   'ec626091f9a4',      // Smesovac-AKU (směšovač cover:0 & čidla AKU / okruh)
-  'ece334e968a8'       // Shelly Pro 3 (čerpadlo okruhu & 4kW / 7.5kW patrony)
+  'ece334e968a8',      // Shelly Pro 3 (čerpadlo okruhu & 4kW / 7.5kW patrony)
+  '28372f368644',      // AKU topeni (Shelly 3EM-63 Gen3 - měření patron ohřevu AKU)
+  'dcda0ce06e8c',      // Eliška-podlaha (Shelly 1PM Gen3)
+  '1c692028dd98',      // Koupelna-podlaha (Shelly Plus 1PM)
+  '8813bfd9d6a4',      // Ložnice podlaha (Shelly Pro 1PM)
+  'cc8da263a07c'       // Obyvakpodlaha (Shelly 1PM Gen3)
 ];
 
 /**

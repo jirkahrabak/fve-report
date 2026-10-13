@@ -444,28 +444,191 @@
           </div>
         </div>
 
-        <!-- 4. Elektrické patrony v AKU & TUV -->
+        <!-- 4. Ohřev AKU (Shelly 3EM-63 Gen3 & Pro 3 patrony) -->
         <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden group">
           <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition"></div>
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-xs font-medium uppercase tracking-wider">Patrony & Čerpadlo (Pro 3)</span>
-            <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><i data-lucide="zap" class="w-4 h-4"></i></div>
+            <span class="text-xs font-medium uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
+              Ohřev AKU (3EM-63)
+            </span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold border border-amber-500/20" id="kpiAku3emTodayBadge">Dnes: 0.00 kWh</span>
           </div>
           <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiPatronyPower">0.0</span>
-            <span class="text-sm font-semibold text-amber-400">kW</span>
+            <span class="text-3xl font-extrabold text-white tracking-tight" id="kpiAku3emPower">0</span>
+            <span class="text-sm font-semibold text-amber-400" id="kpiAku3emUnit">W</span>
             <span class="text-xs px-2 py-0.5 rounded font-bold ml-auto bg-emerald-500/20 text-emerald-300 flex items-center gap-1">
               <span>TUV:</span> <span id="kpiTuvBadge">--.- °C</span>
             </span>
           </div>
-          <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-            <span>Čerp: <strong id="kpiCircuitPumpSub" class="text-slate-400">OFF</strong></span>
-            <span>4kW: <strong id="kpiPatrona4kwBadge" class="text-slate-400">OFF</strong></span>
-            <span>7.5kW: <strong id="kpiPatrona7kwBadge" class="text-slate-400">OFF</strong></span>
-            <span>Celk: <strong class="text-amber-300" id="kpiPatronySum">0 kW</strong></span>
+          <div class="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+            <div class="flex items-center justify-between font-mono">
+              <span>Fáze 3EM:</span>
+              <span class="text-slate-300 font-semibold truncate ml-1" id="kpiAku3emPhases">L1: 0W • L2: 0W • L3: 0W</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px]">
+              <span>Patrony: <strong id="kpiPatrona4kwBadge" class="text-slate-400">4k: OFF</strong> • <strong id="kpiPatrona7kwBadge" class="text-slate-400">7.5k: OFF</strong></span>
+              <span class="text-slate-400 font-mono">Celk: <strong class="text-amber-300" id="kpiAku3emTotal">0.0 kWh</strong></span>
+            </div>
           </div>
         </div>
 
+      </div>
+
+      <!-- Podlahové topení (4 okruhy) - Přehled a stav -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-800 relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 text-slate-950 shadow-md">
+              <i data-lucide="flame" class="w-5 h-5 stroke-[2.5]"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-bold text-white tracking-tight">Podlahové vytápění domu</h2>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700" id="floorHeatingActiveBadge">
+                  <span class="w-2 h-2 rounded-full bg-slate-500" id="floorHeatingActiveDot"></span>
+                  <span id="floorHeatingActiveText">0 z 4 topí</span>
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">Měření příkonu a stav spínání 4 okruhů podlahového topení (Shelly 1PM Gen3 & Pro 1PM)</p>
+            </div>
+          </div>
+
+          <!-- Celkové souhrnné metriky podlahovky -->
+          <div class="flex items-center gap-3">
+            <div class="bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 text-right">
+              <span class="text-slate-400 text-[10px] block uppercase font-medium">Celkový příkon:</span>
+              <div class="flex items-baseline justify-end gap-1 font-mono">
+                <span class="text-lg font-extrabold text-amber-300 tracking-tight" id="floorTotalPower">0</span>
+                <span class="text-xs font-semibold text-amber-400">W</span>
+              </div>
+            </div>
+            <div class="bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 text-right">
+              <span class="text-slate-400 text-[10px] block uppercase font-medium">Spotřeba dnes:</span>
+              <div class="flex items-baseline justify-end gap-1 font-mono">
+                <span class="text-lg font-extrabold text-rose-400 tracking-tight" id="floorTodayEnergy">0.00</span>
+                <span class="text-xs font-semibold text-rose-400">kWh</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 karty místností -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          
+          <!-- 1. Eliška-podlaha (dcda0ce06e8c - Shelly 1PM Gen3) -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group relative overflow-hidden" id="cardFloorEliska">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-pink-500/10 text-pink-400"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+                <div>
+                  <h3 class="text-xs font-bold text-white">Eliška - Pokoj</h3>
+                  <span class="text-[10px] text-slate-400 font-mono">dcda0ce06e8c</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60" id="badgeFloorEliska">VYPNUTO</span>
+            </div>
+            <div class="my-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-2xl font-extrabold text-white tracking-tight" id="powerFloorEliska">0</span>
+                <span class="text-xs font-semibold text-slate-400">W</span>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-xs font-bold text-amber-300" id="todayFloorEliska">0.00 kWh</span>
+                <span class="block text-[10px] text-slate-400">Dnes</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span id="metricsFloorEliska">0.00 A • 235 V</span>
+              <span>Modul: <strong class="text-slate-300" id="tempFloorEliska">--.- °C</strong></span>
+            </div>
+          </div>
+
+          <!-- 2. Koupelna-podlaha (1c692028dd98 - Shelly Plus 1PM) -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group relative overflow-hidden" id="cardFloorKoupelna">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400"><i data-lucide="bath" class="w-4 h-4"></i></div>
+                <div>
+                  <h3 class="text-xs font-bold text-white">Koupelna</h3>
+                  <span class="text-[10px] text-slate-400 font-mono">1c692028dd98</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60" id="badgeFloorKoupelna">VYPNUTO</span>
+            </div>
+            <div class="my-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-2xl font-extrabold text-white tracking-tight" id="powerFloorKoupelna">0</span>
+                <span class="text-xs font-semibold text-slate-400">W</span>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-xs font-bold text-amber-300" id="todayFloorKoupelna">0.00 kWh</span>
+                <span class="block text-[10px] text-slate-400">Dnes</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span id="metricsFloorKoupelna">0.00 A • 235 V</span>
+              <span>Modul: <strong class="text-slate-300" id="tempFloorKoupelna">--.- °C</strong></span>
+            </div>
+          </div>
+
+          <!-- 3. Ložnice podlaha (8813bfd9d6a4 - Shelly Pro 1PM) -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group relative overflow-hidden" id="cardFloorLoznice">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400"><i data-lucide="bed" class="w-4 h-4"></i></div>
+                <div>
+                  <h3 class="text-xs font-bold text-white">Ložnice</h3>
+                  <span class="text-[10px] text-slate-400 font-mono">8813bfd9d6a4</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60" id="badgeFloorLoznice">VYPNUTO</span>
+            </div>
+            <div class="my-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-2xl font-extrabold text-white tracking-tight" id="powerFloorLoznice">0</span>
+                <span class="text-xs font-semibold text-slate-400">W</span>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-xs font-bold text-amber-300" id="todayFloorLoznice">0.00 kWh</span>
+                <span class="block text-[10px] text-slate-400">Dnes</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span id="metricsFloorLoznice">0.00 A • 235 V</span>
+              <span>Modul: <strong class="text-slate-300" id="tempFloorLoznice">--.- °C</strong></span>
+            </div>
+          </div>
+
+          <!-- 4. Obyvakpodlaha (cc8da263a07c - Shelly 1PM Gen3) -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group relative overflow-hidden" id="cardFloorObyvak">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><i data-lucide="sofa" class="w-4 h-4"></i></div>
+                <div>
+                  <h3 class="text-xs font-bold text-white">Obývací pokoj</h3>
+                  <span class="text-[10px] text-slate-400 font-mono">cc8da263a07c</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60" id="badgeFloorObyvak">VYPNUTO</span>
+            </div>
+            <div class="my-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-2xl font-extrabold text-white tracking-tight" id="powerFloorObyvak">0</span>
+                <span class="text-xs font-semibold text-slate-400">W</span>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-xs font-bold text-amber-300" id="todayFloorObyvak">0.00 kWh</span>
+                <span class="block text-[10px] text-slate-400">Dnes</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span id="metricsFloorObyvak">0.00 A • 235 V</span>
+              <span>Modul: <strong class="text-slate-300" id="tempFloorObyvak">--.- °C</strong></span>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- Heating Flow Synoptic & Control Center -->
@@ -550,10 +713,10 @@
                 <text x="65" y="158" text-anchor="middle" fill="#64748b" font-size="8.5">AKU1H:100 • 1P:101 • 1S:102</text>
               </g>
 
-              <!-- Node 3: El. patrony Block above AKU -->
-              <g transform="translate(260, 5)">
-                <rect width="120" height="30" rx="8" fill="#1e293b" stroke="#facc15" stroke-width="1.5"/>
-                <text x="60" y="19" text-anchor="middle" fill="#facc15" font-size="10" font-weight="bold" id="flowPatronyText">⚡ PATRONY: 0 kW</text>
+              <!-- Node 3: El. patrony Block above AKU (Shelly 3EM-63 Gen3) -->
+              <g transform="translate(245, 5)">
+                <rect width="150" height="30" rx="8" fill="#1e293b" stroke="#facc15" stroke-width="1.5"/>
+                <text x="75" y="19" text-anchor="middle" fill="#facc15" font-size="9" font-weight="bold" id="flowPatronyText">⚡ AKU 3EM: 0 W</text>
               </g>
 
               <!-- Node 4: Směšovací ventil -->
@@ -568,27 +731,30 @@
               <!-- Node 5: Otopná soustava / Dům -->
               <g transform="translate(580, 45)">
                 <rect width="90" height="170" rx="14" fill="#1e293b" stroke="#818cf8" stroke-width="2"/>
-                <text x="45" y="24" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">🏠 TOPNÝ</text>
-                <text x="45" y="37" text-anchor="middle" fill="#a5b4fc" font-size="11" font-weight="bold">OKRUH</text>
+                <text x="45" y="22" text-anchor="middle" fill="#a5b4fc" font-size="10.5" font-weight="bold">🏠 TOPNÝ</text>
+                <text x="45" y="34" text-anchor="middle" fill="#a5b4fc" font-size="10.5" font-weight="bold">OKRUH</text>
                 
-                <rect x="8" y="44" width="74" height="16" rx="5" fill="#0f172a"/>
-                <text x="45" y="55" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-weight="bold" id="flowCircuitPumpText">ČERP: --</text>
+                <rect x="8" y="40" width="74" height="16" rx="5" fill="#0f172a"/>
+                <text x="45" y="51" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-weight="bold" id="flowCircuitPumpText">ČERP: --</text>
 
-                <text x="45" y="76" text-anchor="middle" fill="#c084fc" font-size="8">NÁBĚH (103)</text>
-                <text x="45" y="92" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold" id="flowSupplyTemp">--.- °C</text>
+                <text x="45" y="70" text-anchor="middle" fill="#c084fc" font-size="7.5">NÁBĚH (103)</text>
+                <text x="45" y="85" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="bold" id="flowSupplyTemp">--.- °C</text>
                 
-                <text x="45" y="114" text-anchor="middle" fill="#38bdf8" font-size="8">VRATKA (104)</text>
-                <text x="45" y="130" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold" id="flowReturnTemp">--.- °C</text>
+                <text x="45" y="103" text-anchor="middle" fill="#38bdf8" font-size="7.5">VRATKA (104)</text>
+                <text x="45" y="118" text-anchor="middle" fill="#ffffff" font-size="11.5" font-weight="bold" id="flowReturnTemp">--.- °C</text>
 
-                <text x="45" y="152" text-anchor="middle" fill="#c084fc" font-size="7.5" id="flowTrvText">TRV: --</text>
+                <text x="45" y="136" text-anchor="middle" fill="#c084fc" font-size="7" id="flowTrvText">TRV: --</text>
+
+                <rect x="6" y="145" width="78" height="18" rx="4" fill="#0f172a" stroke="#f43f5e" stroke-width="0.8"/>
+                <text x="45" y="157" text-anchor="middle" fill="#fda4af" font-size="7" font-weight="bold" id="flowFloorText">Podlaha: 0 W</text>
               </g>
             </svg>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4 pt-4 border-t border-slate-800 text-xs">
             <div>
-              <span class="text-slate-400 block">Výkon patron celkem:</span>
-              <span class="font-bold text-amber-300" id="txtPatronyWatts">0 W</span>
+              <span class="text-slate-400 block">Ohřev AKU (3EM-63):</span>
+              <span class="font-bold text-amber-300" id="txtPatronyWatts">0 W (Dnes 0.00 kWh)</span>
             </div>
             <div>
               <span class="text-slate-400 block">Čerpadlo okruhu (0):</span>
@@ -603,8 +769,8 @@
               <span class="font-bold text-slate-200" id="txtPatrona7kwDetail">VYPNUTO</span>
             </div>
             <div>
-              <span class="text-slate-400 block">Směšovač (Pro 2PM):</span>
-              <span class="font-bold text-purple-300" id="txtMixSlotStatus">ec626091f9a4 (cover:0)</span>
+              <span class="text-slate-400 block">Podlahové topení:</span>
+              <span class="font-bold text-rose-400" id="txtFloorOverviewDetail">0 W (0 aktivní)</span>
             </div>
             <div>
               <span class="text-slate-400 block">TUV Bojler (106):</span>
@@ -655,6 +821,7 @@
                   </div>
                   <div class="text-[11px] text-slate-400 font-mono" id="cfgMixSlotId">ec626091f9a4 (cover:0)</div>
                   <div class="text-[10px] text-purple-300 font-mono mt-0.5 truncate max-w-[200px]" id="cfgTrvVal">TRV: --</div>
+                  <div class="text-[9px] text-slate-500 font-mono hidden" id="txtMixSlotStatus">ec626091f9a4</div>
                 </div>
                 <div class="text-right">
                   <span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-500/20 text-purple-300" id="cfgMixVal">0%</span>
@@ -662,7 +829,7 @@
                 </div>
               </div>
 
-              <!-- TUV Bojler & Vstup okruhu -->
+              <!-- TUV Bojler & Vstup okruhu slot -->
               <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
                 <div>
                   <div class="text-xs font-semibold text-white">TUV Bojler & Vstup okruhu</div>
@@ -671,6 +838,19 @@
                 <div class="text-right">
                   <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400" id="cfgTuvVal">--.- °C</span>
                   <div class="text-[10px] text-slate-400 font-mono mt-0.5" id="cfgInflowVal">Vstup: --.- °C</div>
+                </div>
+              </div>
+
+              <!-- Shelly 3EM-63 Gen3 Ohřev AKU slot -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">Shelly 3EM-63 (Ohřev AKU)</div>
+                  <div class="text-[11px] text-slate-400 font-mono">28372f368644 (3-fázový elektroměr)</div>
+                  <div class="text-[10px] text-amber-300 font-mono mt-0.5" id="cfgAku3emDetailVal">L1: 0W • L2: 0W • L3: 0W</div>
+                </div>
+                <div class="text-right">
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400" id="cfgAku3emVal">0 W</span>
+                  <div class="text-[10px] text-amber-300 font-mono mt-0.5" id="cfgAku3emTodayVal">Dnes: 0.00 kWh</div>
                 </div>
               </div>
 
@@ -683,7 +863,19 @@
                 </div>
                 <div class="text-right">
                   <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400" id="cfgPatronyVal">OFF</span>
-                  <div class="text-[10px] text-slate-400 mt-0.5" id="cfgPatronyDetailVal">0 kW</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5" id="cfgPatronyDetailVal">0 kW relé</div>
+                </div>
+              </div>
+
+              <!-- Podlahové topení (4 okruhy) slot -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-white">Podlahové vytápění (4 okruhy)</div>
+                  <div class="text-[11px] text-slate-400 font-mono">Eliška, Koupelna, Ložnice, Obývák</div>
+                </div>
+                <div class="text-right">
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-400" id="cfgFloorVal">0 W</span>
+                  <div class="text-[10px] text-slate-400 font-mono mt-0.5" id="cfgFloorDetailVal">0 aktivní • Dnes 0.00 kWh</div>
                 </div>
               </div>
 
@@ -726,13 +918,14 @@
             <thead class="text-[11px] text-slate-400 uppercase border-b border-slate-800">
               <tr>
                 <th class="py-2.5 px-3">Čas</th>
-                <th class="py-2.5 px-3">Kotel / Komín (°C)</th>
-                <th class="py-2.5 px-3">AKU 1H / 1P / 1S (°C)</th>
-                <th class="py-2.5 px-3">Směšovač (%)</th>
-                <th class="py-2.5 px-3">Okruh Náběh / Vratka (°C)</th>
-                <th class="py-2.5 px-3">TUV (°C)</th>
-                <th class="py-2.5 px-3">Patrony 4 / 7.5 kW</th>
-                <th class="py-2.5 px-3">Elektro (kW)</th>
+                <th class="py-2.5 px-3">Kotel / Komín</th>
+                <th class="py-2.5 px-3">AKU 1H / 1P / 1S</th>
+                <th class="py-2.5 px-3">Směšovač</th>
+                <th class="py-2.5 px-3">Okruh N / V</th>
+                <th class="py-2.5 px-3">TUV</th>
+                <th class="py-2.5 px-3">Ohřev AKU (3EM-63)</th>
+                <th class="py-2.5 px-3">Dnes AKU</th>
+                <th class="py-2.5 px-3">Podlahovka</th>
               </tr>
             </thead>
             <tbody id="heatingLogsTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
@@ -874,7 +1067,12 @@
         'XB211299191617650', // Meteostanice WS90
         'ec62608862a4',      // Kotel (teplota kotle & komína)
         'ec626091f9a4',      // Smesovac-AKU (směšovač cover:0 & čidla AKU / okruh / TUV)
-        'ece334e968a8'       // El-patrony-Pro3 (4kW & 7.5kW)
+        'ece334e968a8',      // El-patrony-Pro3 (4kW & 7.5kW)
+        '28372f368644',      // AKU topeni (Shelly 3EM-63 Gen3 - elektroměr ohřevu AKU)
+        'dcda0ce06e8c',      // Eliška-podlaha (Shelly 1PM Gen3)
+        '1c692028dd98',      // Koupelna-podlaha (Shelly Plus 1PM)
+        '8813bfd9d6a4',      // Ložnice podlaha (Shelly Pro 1PM)
+        'cc8da263a07c'       // Obyvakpodlaha (Shelly 1PM Gen3)
       ],
       heatingSlots: {
         mixValveId: localStorage.getItem('cfgMixValveId') || 'ec626091f9a4',
@@ -950,7 +1148,29 @@
         trvActiveText: '',
         patrona4kwOn: false,
         patrona7kwOn: false,
-        patronyTotalPower: 0
+        patronyTotalPower: 0,
+        // Ohřev AKU - Shelly 3EM-63 Gen3 (28372f368644)
+        aku3emPower: 0,
+        aku3emL1Power: 0,
+        aku3emL2Power: 0,
+        aku3emL3Power: 0,
+        aku3emL1Current: 0,
+        aku3emL2Current: 0,
+        aku3emL3Current: 0,
+        aku3emVoltage: 235,
+        aku3emTotalEnergyWh: 0,
+        aku3emTodayEnergyKwh: 0,
+        aku3emDeviceTemp: 0,
+        // Podlahové topení (4 okruhy)
+        floorTotalPower: 0,
+        floorTodayEnergyKwh: 0,
+        floorActiveZones: 0,
+        floorRooms: {
+          eliska: { id: 'dcda0ce06e8c', name: 'Eliška - Pokoj', power: 0, output: false, current: 0, voltage: 235, temp: 0, todayKwh: 0, totalKwh: 0 },
+          koupelna: { id: '1c692028dd98', name: 'Koupelna', power: 0, output: false, current: 0, voltage: 235, temp: 0, todayKwh: 0, totalKwh: 0 },
+          loznice: { id: '8813bfd9d6a4', name: 'Ložnice', power: 0, output: false, current: 0, voltage: 235, temp: 0, todayKwh: 0, totalKwh: 0 },
+          obyvak: { id: 'cc8da263a07c', name: 'Obývací pokoj', power: 0, output: false, current: 0, voltage: 235, temp: 0, todayKwh: 0, totalKwh: 0 }
+        }
       }
     };
 
@@ -1190,11 +1410,6 @@
           cpBadge.textContent = d.circuitPumpOn ? 'ČERP: BĚŽÍ' : 'ČERP: OFF';
           cpBadge.className = d.circuitPumpOn ? 'text-xs px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300' : 'text-xs px-2 py-0.5 rounded font-bold bg-slate-800 text-slate-400';
         }
-        const cpSub = document.getElementById('kpiCircuitPumpSub');
-        if (cpSub) {
-          cpSub.textContent = d.circuitPumpOn ? 'BĚŽÍ' : 'OFF';
-          cpSub.className = d.circuitPumpOn ? 'text-emerald-400 font-bold' : 'text-slate-400';
-        }
         const cpFlw = document.getElementById('flowCircuitPumpText');
         if (cpFlw) {
           cpFlw.textContent = d.circuitPumpOn ? '🌀 ČERP: BĚŽÍ' : '⏹ ČERP: VYP';
@@ -1225,26 +1440,156 @@
           trvCfg.textContent = d.trvActiveText || 'TRV: --';
         }
 
-        const kwSum = (d.patronyTotalPower / 1000).toFixed(1);
-        document.getElementById('kpiPatronyPower').textContent = kwSum;
-        document.getElementById('kpiPatronySum').textContent = `${kwSum} kW`;
+        // Ohřev AKU - Shelly 3EM-63 Gen3 (28372f368644)
+        const pVal = d.aku3emPower;
+        const elAkuPower = document.getElementById('kpiAku3emPower');
+        const elAkuUnit = document.getElementById('kpiAku3emUnit');
+        if (elAkuPower && elAkuUnit) {
+          if (pVal >= 1000) {
+            elAkuPower.textContent = (pVal / 1000).toFixed(2);
+            elAkuUnit.textContent = 'kW';
+          } else {
+            elAkuPower.textContent = Math.round(pVal);
+            elAkuUnit.textContent = 'W';
+          }
+        }
+
+        const elAkuToday = document.getElementById('kpiAku3emTodayBadge');
+        if (elAkuToday) {
+          elAkuToday.textContent = `Dnes: ${d.aku3emTodayEnergyKwh.toFixed(2)} kWh`;
+        }
+
+        const elAkuPhases = document.getElementById('kpiAku3emPhases');
+        if (elAkuPhases) {
+          elAkuPhases.textContent = `L1: ${Math.round(d.aku3emL1Power)}W (${d.aku3emL1Current.toFixed(1)}A) • L2: ${Math.round(d.aku3emL2Power)}W (${d.aku3emL2Current.toFixed(1)}A) • L3: ${Math.round(d.aku3emL3Power)}W (${d.aku3emL3Current.toFixed(1)}A)`;
+        }
+
+        const elAkuTotal = document.getElementById('kpiAku3emTotal');
+        if (elAkuTotal) {
+          elAkuTotal.textContent = `${(d.aku3emTotalEnergyWh / 1000).toFixed(1)} kWh`;
+        }
+
         const p4 = document.getElementById('kpiPatrona4kwBadge');
         if (p4) {
-          p4.textContent = d.patrona4kwOn ? 'ON (4kW)' : 'OFF';
+          p4.textContent = d.patrona4kwOn ? '4k: ON' : '4k: OFF';
           p4.className = d.patrona4kwOn ? 'text-amber-400 font-bold' : 'text-slate-400';
         }
         const p7 = document.getElementById('kpiPatrona7kwBadge');
         if (p7) {
-          p7.textContent = d.patrona7kwOn ? 'ON (7.5kW)' : 'OFF';
+          p7.textContent = d.patrona7kwOn ? '7.5k: ON' : '7.5k: OFF';
           p7.className = d.patrona7kwOn ? 'text-amber-400 font-bold' : 'text-slate-400';
         }
-        document.getElementById('flowPatronyText').textContent = `⚡ PATRONY: ${kwSum} kW`;
-        document.getElementById('txtPatronyWatts').textContent = `${d.patronyTotalPower} W`;
-        document.getElementById('txtPatrona4kwDetail').textContent = d.patrona4kwOn ? 'AKTIVNÍ (4 kW)' : 'VYPNUTO';
-        document.getElementById('txtPatrona7kwDetail').textContent = d.patrona7kwOn ? 'AKTIVNÍ (7.5 kW)' : 'VYPNUTO';
-        document.getElementById('cfgPatronyVal').textContent = d.patronyTotalPower > 0 ? `${kwSum} kW` : 'OFF';
-        const pDetail = document.getElementById('cfgPatronyDetailVal');
-        if (pDetail) pDetail.textContent = `${kwSum} kW`;
+
+        const flwPatr = document.getElementById('flowPatronyText');
+        if (flwPatr) {
+          flwPatr.textContent = `⚡ AKU 3EM: ${Math.round(d.aku3emPower)} W (Dnes: ${d.aku3emTodayEnergyKwh.toFixed(2)} kWh)`;
+        }
+
+        const txtPatr = document.getElementById('txtPatronyWatts');
+        if (txtPatr) {
+          txtPatr.textContent = `${Math.round(d.aku3emPower)} W (Dnes: ${d.aku3emTodayEnergyKwh.toFixed(2)} kWh)`;
+        }
+
+        const cfgAku3em = document.getElementById('cfgAku3emVal');
+        if (cfgAku3em) {
+          cfgAku3em.textContent = `${Math.round(d.aku3emPower)} W`;
+        }
+        const cfgAku3emDet = document.getElementById('cfgAku3emDetailVal');
+        if (cfgAku3emDet) {
+          cfgAku3emDet.textContent = `L1: ${Math.round(d.aku3emL1Power)}W • L2: ${Math.round(d.aku3emL2Power)}W • L3: ${Math.round(d.aku3emL3Power)}W`;
+        }
+        const cfgAku3emTod = document.getElementById('cfgAku3emTodayVal');
+        if (cfgAku3emTod) {
+          cfgAku3emTod.textContent = `Dnes: ${d.aku3emTodayEnergyKwh.toFixed(2)} kWh`;
+        }
+
+        const txtPatrona4 = document.getElementById('txtPatrona4kwDetail');
+        if (txtPatrona4) txtPatrona4.textContent = d.patrona4kwOn ? 'AKTIVNÍ (4 kW)' : 'VYPNUTO';
+        const txtPatrona7 = document.getElementById('txtPatrona7kwDetail');
+        if (txtPatrona7) txtPatrona7.textContent = d.patrona7kwOn ? 'AKTIVNÍ (7.5 kW)' : 'VYPNUTO';
+        const cfgPatrVal = document.getElementById('cfgPatronyVal');
+        if (cfgPatrVal) cfgPatrVal.textContent = (d.patrona4kwOn || d.patrona7kwOn) ? 'SEPŮTO' : 'OFF';
+        const cfgPatrDet = document.getElementById('cfgPatronyDetailVal');
+        if (cfgPatrDet) cfgPatrDet.textContent = `${((d.patrona4kwOn ? 4 : 0) + (d.patrona7kwOn ? 7.5 : 0)).toFixed(1)} kW relé`;
+
+        // Podlahové topení (4 okruhy)
+        const elFloorPower = document.getElementById('floorTotalPower');
+        if (elFloorPower) elFloorPower.textContent = Math.round(d.floorTotalPower);
+        const elFloorToday = document.getElementById('floorTodayEnergy');
+        if (elFloorToday) elFloorToday.textContent = d.floorTodayEnergyKwh.toFixed(2);
+        
+        const flBadge = document.getElementById('floorHeatingActiveBadge');
+        const flDot = document.getElementById('floorHeatingActiveDot');
+        const flText = document.getElementById('floorHeatingActiveText');
+        if (flText) flText.textContent = `${d.floorActiveZones} z 4 topí`;
+        if (flBadge && flDot) {
+          if (d.floorActiveZones > 0) {
+            flBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+            flDot.className = 'w-2 h-2 rounded-full bg-rose-400 animate-pulse';
+          } else {
+            flBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+            flDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+          }
+        }
+
+        const updateRoomCard = (prefix, room) => {
+          if (!room) return;
+          const card = document.getElementById(`cardFloor${prefix}`);
+          const badge = document.getElementById(`badgeFloor${prefix}`);
+          const pEl = document.getElementById(`powerFloor${prefix}`);
+          const tEl = document.getElementById(`todayFloor${prefix}`);
+          const mEl = document.getElementById(`metricsFloor${prefix}`);
+          const tempEl = document.getElementById(`tempFloor${prefix}`);
+
+          if (pEl) pEl.textContent = Math.round(room.power);
+          if (tEl) tEl.textContent = `${room.todayKwh.toFixed(2)} kWh`;
+          if (mEl) mEl.textContent = `${room.current.toFixed(2)} A • ${Math.round(room.voltage)} V`;
+          if (tempEl) tempEl.textContent = room.temp > 0 ? `${room.temp.toFixed(1)} °C` : '--.- °C';
+
+          const isHeating = room.output || room.power > 10;
+          if (badge) {
+            if (isHeating) {
+              badge.textContent = `TOPÍ (${Math.round(room.power)} W)`;
+              badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 shadow-sm animate-pulse';
+            } else {
+              badge.textContent = 'VYPNUTO';
+              badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60';
+            }
+          }
+          if (card) {
+            if (isHeating) {
+              card.className = 'p-4 rounded-xl bg-slate-900/90 border border-rose-500/40 shadow-lg shadow-rose-500/10 transition flex flex-col justify-between group relative overflow-hidden';
+            } else {
+              card.className = 'p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between group relative overflow-hidden';
+            }
+          }
+        };
+
+        if (d.floorRooms) {
+          updateRoomCard('Eliska', d.floorRooms.eliska);
+          updateRoomCard('Koupelna', d.floorRooms.koupelna);
+          updateRoomCard('Loznice', d.floorRooms.loznice);
+          updateRoomCard('Obyvak', d.floorRooms.obyvak);
+        }
+
+        const flwFloor = document.getElementById('flowFloorText');
+        if (flwFloor) {
+          flwFloor.textContent = `Podlaha: ${Math.round(d.floorTotalPower)} W (${d.floorActiveZones} topí)`;
+        }
+
+        const txtFloorDet = document.getElementById('txtFloorOverviewDetail');
+        if (txtFloorDet) {
+          txtFloorDet.textContent = `${Math.round(d.floorTotalPower)} W (${d.floorActiveZones} topí • Dnes ${d.floorTodayEnergyKwh.toFixed(2)} kWh)`;
+        }
+
+        const cfgFloor = document.getElementById('cfgFloorVal');
+        if (cfgFloor) {
+          cfgFloor.textContent = `${Math.round(d.floorTotalPower)} W`;
+        }
+        const cfgFloorDet = document.getElementById('cfgFloorDetailVal');
+        if (cfgFloorDet) {
+          cfgFloorDet.textContent = `${d.floorActiveZones} z 4 topí • Dnes ${d.floorTodayEnergyKwh.toFixed(2)} kWh`;
+        }
 
         const mixStatusEl = document.getElementById('txtMixSlotStatus');
         if (mixStatusEl) mixStatusEl.textContent = `ec626091f9a4 (${Math.round(d.mixValvePosition)}%)`;
@@ -1297,8 +1642,9 @@
         <td class="py-2.5 px-3 text-purple-300 font-semibold">${Math.round(d.mixValvePosition)}% <span class="text-slate-500 font-normal text-[10px]">(${d.mixValveStatus})</span></td>
         <td class="py-2.5 px-3 text-slate-200">${d.mixSupplyTemp.toFixed(1)} / ${d.mixReturnTemp.toFixed(1)} °C</td>
         <td class="py-2.5 px-3 text-emerald-400 font-semibold">${d.tuvTemp.toFixed(1)} °C</td>
-        <td class="py-2.5 px-3 text-slate-300 text-[11px]">${d.patrona4kwOn ? '<span class="text-amber-400 font-bold">4k:ON</span>' : '4k:OFF'} • ${d.patrona7kwOn ? '<span class="text-amber-400 font-bold">7.5k:ON</span>' : '7.5k:OFF'}</td>
-        <td class="py-2.5 px-3 text-amber-300 font-semibold">${(d.patronyTotalPower / 1000).toFixed(1)} kW</td>
+        <td class="py-2.5 px-3 text-amber-300 font-semibold">${Math.round(d.aku3emPower)} W <span class="text-slate-500 text-[10px] font-normal">(${d.patrona4kwOn ? '4k' : ''}${d.patrona7kwOn ? '+7.5k' : '' || 'relé off'})</span></td>
+        <td class="py-2.5 px-3 text-amber-400 font-semibold">${d.aku3emTodayEnergyKwh.toFixed(2)} kWh</td>
+        <td class="py-2.5 px-3 text-rose-300 font-semibold">${Math.round(d.floorTotalPower)} W <span class="text-slate-400 text-[10px] font-normal">(${d.floorActiveZones}/4)</span></td>
       `;
       tbody.prepend(tr);
       while (tbody.children.length > 8) {
@@ -1369,6 +1715,81 @@
         state.lastLatencyMs = Math.round(performance.now() - startTime);
         updateDiagView();
         if (refreshIcon) setTimeout(() => refreshIcon.classList.remove('animate-spin'), 400);
+      }
+    }
+
+    // Výpočet denní spotřeby (kWh za aktuální den) s ukládáním půlnoční základny do paměti
+    function calculateDailyEnergyKwh(devId, currentTotalWh) {
+      if (currentTotalWh === undefined || currentTotalWh === null || isNaN(currentTotalWh)) return 0;
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const baseKey = `shelly_base_${devId}_${todayStr}`;
+      const lastKey = `shelly_last_${devId}`;
+
+      let baseWh = localStorage.getItem(baseKey);
+
+      if (baseWh === null) {
+        try {
+          const lastRaw = localStorage.getItem(lastKey);
+          if (lastRaw) {
+            const lastData = JSON.parse(lastRaw);
+            if (lastData && typeof lastData.wh === 'number' && lastData.wh <= currentTotalWh) {
+              baseWh = lastData.wh;
+            }
+          }
+        } catch (e) {}
+
+        if (baseWh === null) {
+          baseWh = currentTotalWh;
+        }
+        try {
+          localStorage.setItem(baseKey, String(baseWh));
+        } catch (e) {}
+      } else {
+        baseWh = parseFloat(baseWh);
+        if (currentTotalWh < baseWh) {
+          baseWh = currentTotalWh;
+          try {
+            localStorage.setItem(baseKey, String(baseWh));
+          } catch (e) {}
+        }
+      }
+
+      try {
+        localStorage.setItem(lastKey, JSON.stringify({ date: todayStr, wh: currentTotalWh, ts: Date.now() }));
+      } catch (e) {}
+
+      const diffWh = Math.max(0, currentTotalWh - baseWh);
+      return Number((diffWh / 1000).toFixed(2));
+    }
+
+    function parseFloorDevice(roomKey, dev, devId) {
+      const room = state.currentData.floorRooms[roomKey];
+      if (!room || !dev) return;
+
+      if (dev['switch:0']) {
+        const sw = dev['switch:0'];
+        room.output = !!sw.output;
+        room.power = Number(sw.apower || 0);
+        room.current = Number(sw.current || 0);
+        room.voltage = Number(sw.voltage || 235);
+        if (sw.temperature && sw.temperature.tC !== undefined) {
+          room.temp = Number(sw.temperature.tC);
+        }
+        if (sw.aenergy && sw.aenergy.total !== undefined) {
+          const totWh = Number(sw.aenergy.total || 0);
+          room.totalKwh = Number((totWh / 1000).toFixed(2));
+          room.todayKwh = calculateDailyEnergyKwh(devId, totWh);
+        }
+      } else if (dev.meters && dev.meters[0]) {
+        room.power = Number(dev.meters[0].power || 0);
+        room.output = !!(dev.relays && dev.relays[0] && dev.relays[0].ison);
+        if (dev.temperature !== undefined) room.temp = Number(dev.temperature);
+        if (dev.meters[0].total !== undefined) {
+          const totWh = Number(dev.meters[0].total || 0);
+          room.totalKwh = Number((totWh / 1000).toFixed(2));
+          room.todayKwh = calculateDailyEnergyKwh(devId, totWh);
+        }
       }
     }
 
@@ -1623,7 +2044,66 @@
           state.currentData.patronyTotalPower = (state.currentData.patrona4kwOn ? 4000 : 0) + (state.currentData.patrona7kwOn ? 7500 : 0);
         }
 
-        // 11. Externí směšovací ventil (pokud je nastaven jiný než ec626091f9a4)
+        // 11. AKU topení - 3-fázový elektroměr patron Shelly 3EM-63 Gen3: 28372f368644
+        else if (devId === '28372f368644') {
+          detectedRoles.push({ id: rawDevId, name: 'AKU topeni', role: 'Ohřev AKU (Shelly 3EM-63 Gen3)' });
+
+          if (dev['em:0']) {
+            const em0 = dev['em:0'];
+            state.currentData.aku3emPower = Number(em0.total_act_power !== undefined ? em0.total_act_power : ((em0.a_act_power || 0) + (em0.b_act_power || 0) + (em0.c_act_power || 0)));
+            state.currentData.aku3emL1Power = Number(em0.a_act_power || 0);
+            state.currentData.aku3emL2Power = Number(em0.b_act_power || 0);
+            state.currentData.aku3emL3Power = Number(em0.c_act_power || 0);
+            state.currentData.aku3emL1Current = Number(em0.a_current || 0);
+            state.currentData.aku3emL2Current = Number(em0.b_current || 0);
+            state.currentData.aku3emL3Current = Number(em0.c_current || 0);
+            state.currentData.aku3emVoltage = Number(em0.a_voltage || 235);
+          } else if (dev.emeters) {
+            let sumP = 0;
+            dev.emeters.forEach((em, idx) => {
+              sumP += (em.power || 0);
+              if (idx === 0) { state.currentData.aku3emL1Power = Number(em.power || 0); state.currentData.aku3emL1Current = Number(em.current || 0); }
+              if (idx === 1) { state.currentData.aku3emL2Power = Number(em.power || 0); state.currentData.aku3emL2Current = Number(em.current || 0); }
+              if (idx === 2) { state.currentData.aku3emL3Power = Number(em.power || 0); state.currentData.aku3emL3Current = Number(em.current || 0); }
+            });
+            state.currentData.aku3emPower = dev.total_power !== undefined ? Number(dev.total_power) : sumP;
+          }
+
+          if (dev['emdata:0']) {
+            state.currentData.aku3emTotalEnergyWh = Number(dev['emdata:0'].total_act || 0);
+            state.currentData.aku3emTodayEnergyKwh = calculateDailyEnergyKwh('28372f368644', state.currentData.aku3emTotalEnergyWh);
+          }
+
+          if (dev['temperature:0'] && dev['temperature:0'].tC !== undefined) {
+            state.currentData.aku3emDeviceTemp = Number(dev['temperature:0'].tC);
+          }
+        }
+
+        // 12. Podlahové topení Eliška: dcda0ce06e8c (Shelly 1PM Gen3)
+        else if (devId === 'dcda0ce06e8c') {
+          detectedRoles.push({ id: rawDevId, name: 'Eliška-podlaha', role: 'Podlahové topení Eliška' });
+          parseFloorDevice('eliska', dev, 'dcda0ce06e8c');
+        }
+
+        // 13. Podlahové topení Koupelna: 1c692028dd98 (Shelly Plus 1PM)
+        else if (devId === '1c692028dd98') {
+          detectedRoles.push({ id: rawDevId, name: 'Koupelna-podlaha', role: 'Podlahové topení Koupelna' });
+          parseFloorDevice('koupelna', dev, '1c692028dd98');
+        }
+
+        // 14. Podlahové topení Ložnice: 8813bfd9d6a4 (Shelly Pro 1PM)
+        else if (devId === '8813bfd9d6a4') {
+          detectedRoles.push({ id: rawDevId, name: 'Ložnice podlaha', role: 'Podlahové topení Ložnice' });
+          parseFloorDevice('loznice', dev, '8813bfd9d6a4');
+        }
+
+        // 15. Podlahové topení Obývací pokoj: cc8da263a07c (Shelly 1PM Gen3)
+        else if (devId === 'cc8da263a07c') {
+          detectedRoles.push({ id: rawDevId, name: 'Obyvakpodlaha', role: 'Podlahové topení Obývák' });
+          parseFloorDevice('obyvak', dev, 'cc8da263a07c');
+        }
+
+        // 16. Externí směšovací ventil (pokud je nastaven jiný než ec626091f9a4)
         else if (SHELLY_CONFIG.heatingSlots.mixValveId && devId === SHELLY_CONFIG.heatingSlots.mixValveId.toLowerCase()) {
           detectedRoles.push({ id: rawDevId, name: 'Smesovac-ext', role: 'Externí směšovací ventil' });
           if (dev['cover:0']) {
@@ -1635,6 +2115,21 @@
           }
         }
       });
+
+      // Spočítáme celkovou spotřebu a stav podlahového topení
+      let flrPowerSum = 0;
+      let flrTodaySum = 0;
+      let flrActiveCount = 0;
+      if (state.currentData.floorRooms) {
+        Object.values(state.currentData.floorRooms).forEach(r => {
+          flrPowerSum += (r.power || 0);
+          flrTodaySum += (r.todayKwh || 0);
+          if (r.output || r.power > 10) flrActiveCount++;
+        });
+      }
+      state.currentData.floorTotalPower = flrPowerSum;
+      state.currentData.floorTodayEnergyKwh = Number(flrTodaySum.toFixed(2));
+      state.currentData.floorActiveZones = flrActiveCount;
 
       // Spočítáme celkovou zátěž ze střídačů Victron (VE500 + VE2000)
       state.currentData.victronLoad = state.currentData.ve500Power + state.currentData.ve2000Power;
